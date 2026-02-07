@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -133,7 +132,10 @@ export default function Dashboard() {
     router.push('/login');
   };
 
-  if (isUserLoading || !user || isOccasionsLoading || !isMounted) {
+  // Capture user at this point to avoid null access in child components if auth state flickers
+  const currentUser = user;
+
+  if (isUserLoading || !currentUser || isOccasionsLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -216,7 +218,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4 flex-1">
-                <OccasionStats userId={user.uid} occasionId={occ.id} />
+                <OccasionStats userId={currentUser.uid} occasionId={occ.id} />
               </CardContent>
               <CardFooter className="bg-white border-t p-4 flex gap-3">
                 <Button asChild className="flex-1 bg-primary font-bold h-11">
