@@ -71,7 +71,12 @@ export const translations: Record<Language, Record<string, string>> = {
     qrActive: "Personal QR Active",
     qrDemo: "Showing Demo QR - Click upload to change",
     entries: "Entries",
-    total: "Total"
+    total: "Total",
+    analytics: "Analytics & Trends",
+    collectionSummary: "Collection Summary",
+    aiInsights: "AI Highlights",
+    generating: "Analyzing...",
+    noDataForChart: "Add records to see trends"
   },
   hi: {
     appName: "नेवता डिजिटल",
@@ -143,6 +148,11 @@ export const translations: Record<Language, Record<string, string>> = {
     qrActive: "व्यक्तिगत QR सक्रिय",
     qrDemo: "डेमो QR दिखाया जा रहा है - बदलने के लिए अपलोड पर क्लिक करें",
     entries: "एंट्री",
-    total: "कुल"
+    total: "कुल",
+    analytics: "एनालिटिक्स और ट्रेंड्स",
+    collectionSummary: "कलेक्शन सारांश",
+    aiInsights: "AI मुख्य बातें",
+    generating: "विश्लेषण किया जा रहा है...",
+    noDataForChart: "ट्रेंड देखने के लिए रिकॉर्ड जोड़ें"
   }
 };

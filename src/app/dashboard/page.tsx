@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight, Loader2, Users } from 'lucide-react';
+import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight, Loader2, Users, BarChart3 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -18,14 +18,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useAuth } from '@/firebase';
-import { collection, doc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
 import { useLanguage } from '@/components/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 function OccasionStats({ userId, occasionId }: { userId: string; occasionId: string }) {
   const { t } = useLanguage();
@@ -76,6 +77,7 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [occasionsWithTotals, setOccasionsWithTotals] = useState<any[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -87,15 +89,6 @@ export default function Dashboard() {
     }
   }, [user, isUserLoading, router, isMounted]);
 
-  useEffect(() => {
-    if (isMounted && !newOccasion.eventDate) {
-      setNewOccasion(prev => ({
-        ...prev,
-        eventDate: new Date().toISOString().split('T')[0]
-      }));
-    }
-  }, [isMounted, newOccasion.eventDate]);
-
   const occasionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(collection(db, 'users', user.uid, 'occasions'), orderBy('createdAt', 'desc'));
@@ -103,36 +96,67 @@ export default function Dashboard() {
 
   const { data: occasions, isLoading: isOccasionsLoading } = useCollection(occasionsRef);
 
+  useEffect(() => {
+    if (!db || !user?.uid || !occasions) return;
+
+    const unsubscribers: (() => void)[] = [];
+
+    occasions.forEach(occ => {
+      const q = collection(db, 'users', user.uid, 'occasions', occ.id, 'contributions');
+      const unsub = onSnapshot(q, (snapshot) => {
+        const total = snapshot.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0);
+        setOccasionsWithTotals(prev => {
+          const index = prev.findIndex(p => p.id === occ.id);
+          const newItem = { id: occ.id, name: occ.name, total };
+          if (index >= 0) {
+            const updated = [...prev];
+            updated[index] = newItem;
+            return updated;
+          }
+          return [...prev, newItem];
+        });
+      });
+      unsubscribers.push(unsub);
+    });
+
+    return () => unsubscribers.forEach(u => u());
+  }, [db, user?.uid, occasions]);
+
   const filteredOccasions = useMemo(() => {
     return (occasions || []).filter(occ => 
       occ.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [occasions, searchQuery]);
 
+  const chartData = useMemo(() => {
+    return occasionsWithTotals
+      .filter(o => o.total > 0)
+      .slice(0, 5)
+      .map(o => ({
+        name: o.name.split(' ')[0], // short name
+        fullName: o.name,
+        total: o.total
+      }));
+  }, [occasionsWithTotals]);
+
   const handleCreateOccasion = () => {
     if (!db || !user?.uid) return;
-    
-    if (!newOccasion.name.trim()) {
-      toast({ title: "Validation Error", description: "Event name is required.", variant: "destructive" });
-      return;
-    }
+    if (!newOccasion.name.trim()) return;
 
     setIsCreating(true);
     const colRef = collection(db, 'users', user.uid, 'occasions');
     
     addDocumentNonBlocking(colRef, {
       name: newOccasion.name,
-      eventDate: newOccasion.eventDate,
+      eventDate: newOccasion.eventDate || new Date().toISOString().split('T')[0],
       ownerId: user.uid,
       createdAt: new Date().toISOString()
     }).then(() => {
       toast({ title: "Success", description: `${newOccasion.name} added.` });
       setIsDialogOpen(false);
       setIsCreating(false);
-      setNewOccasion({ name: "", eventDate: new Date().toISOString().split('T')[0] });
-    }).catch(() => {
-      setIsCreating(false);
-    });
+      setNewOccasion({ name: "", eventDate: "" });
+    }).catch(() => setIsCreating(false));
   };
 
   const handleDeleteOccasion = (id: string) => {
@@ -143,12 +167,8 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-    } catch (error) {
-      toast({ title: "Error", description: "Logout failed.", variant: "destructive" });
-    }
+    await signOut(auth);
+    router.push('/login');
   };
 
   if (isUserLoading || !user || isOccasionsLoading || !isMounted) {
@@ -170,11 +190,7 @@ export default function Dashboard() {
         </Link>
         <div className="ml-auto flex items-center gap-4">
           <LanguageToggle />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4 hidden sm:flex">
-             <User className="w-4 h-4 text-primary" />
-             <span className="font-body font-bold">{user?.displayName || t('welcomeGuest')}</span>
-          </div>
-          <Button onClick={handleLogout} variant="ghost" size="sm" className="font-bold text-red-600 hover:bg-red-50">
+          <Button onClick={handleLogout} variant="ghost" size="sm" className="font-bold text-red-600">
             {t('logout')}
           </Button>
         </div>
@@ -193,38 +209,24 @@ export default function Dashboard() {
                 <Plus className="w-5 h-5 mr-2" /> {t('newOccasion')}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]" suppressHydrationWarning>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle className="font-headline text-2xl text-accent">{t('createEventTitle')}</DialogTitle>
-                <DialogDescription className="font-body">
-                  {t('createEventDesc')}
-                </DialogDescription>
+                <DialogDescription>{t('createEventDesc')}</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="font-body">{t('appName')}</Label>
-                  <Input 
-                    id="title" 
-                    value={newOccasion.name} 
-                    onChange={e => setNewOccasion({...newOccasion, name: e.target.value})} 
-                    placeholder={t('occasionTitlePlaceholder')} 
-                    suppressHydrationWarning 
-                  />
+                  <Label htmlFor="title">{t('appName')}</Label>
+                  <Input id="title" value={newOccasion.name} onChange={e => setNewOccasion({...newOccasion, name: e.target.value})} placeholder={t('occasionTitlePlaceholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="font-body">{t('eventDate')}</Label>
-                  <Input 
-                    id="date" 
-                    type="date" 
-                    value={newOccasion.eventDate} 
-                    onChange={e => setNewOccasion({...newOccasion, eventDate: e.target.value})} 
-                    suppressHydrationWarning 
-                  />
+                  <Label htmlFor="date">{t('eventDate')}</Label>
+                  <Input id="date" type="date" value={newOccasion.eventDate} onChange={e => setNewOccasion({...newOccasion, eventDate: e.target.value})} />
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>{t('cancel')}</Button>
-                <Button onClick={handleCreateOccasion} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={isCreating}>
+                <Button onClick={handleCreateOccasion} className="bg-primary" disabled={isCreating}>
                   {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : t('startRecording')}
                 </Button>
               </DialogFooter>
@@ -232,14 +234,50 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
+        {chartData.length > 0 && (
+          <Card className="mb-8 border-primary/20 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-headline flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" /> {t('analytics')}
+              </CardTitle>
+              <CardDescription>{t('collectionSummary')}</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[250px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-3 border rounded-lg shadow-xl">
+                            <p className="font-bold text-accent">{payload[0].payload.fullName}</p>
+                            <p className="text-primary font-bold">₹{payload[0].value?.toLocaleString()}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--accent))'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input 
             placeholder={t('searchEventsPlaceholder')} 
-            className="pl-12 h-14 rounded-2xl bg-white border-muted shadow-sm focus:ring-primary text-lg"
+            className="pl-12 h-14 rounded-2xl bg-white border-muted shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            suppressHydrationWarning
           />
         </div>
 
@@ -247,41 +285,33 @@ export default function Dashboard() {
           {filteredOccasions.length > 0 ? filteredOccasions.map((occ) => (
             <Card key={occ.id} className="hover:shadow-md transition-all group border-muted shadow-sm overflow-hidden flex flex-col bg-white">
               <CardHeader className="bg-secondary/10 border-b pb-4">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="font-headline text-2xl text-accent group-hover:text-primary transition-colors line-clamp-1">{occ.name}</CardTitle>
-                </div>
-                <CardDescription className="flex items-center gap-4 pt-2 font-body text-base">
-                  <span className="flex items-center gap-1.5" suppressHydrationWarning>
-                    <Calendar className="w-4 h-4 text-primary" /> {occ.eventDate}
-                  </span>
+                <CardTitle className="font-headline text-2xl text-accent group-hover:text-primary transition-colors line-clamp-1">{occ.name}</CardTitle>
+                <CardDescription className="flex items-center gap-2 pt-2">
+                   <Calendar className="w-4 h-4 text-primary" /> {occ.eventDate}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4 flex-1">
                 <OccasionStats userId={user.uid} occasionId={occ.id} />
               </CardContent>
               <CardFooter className="bg-white border-t p-4 flex gap-3">
-                <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11">
+                <Button asChild className="flex-1 bg-primary font-bold h-11">
                   <Link href={`/event/${occ.id}`}>
                     {t('manageRecords')} <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
                 
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-11 w-11 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-100">
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </AlertDialogTrigger>
+                  <Button variant="outline" size="icon" asChild className="h-11 w-11 text-red-500 border-red-100">
+                    <DialogTrigger><Trash2 className="w-5 h-5" /></DialogTrigger>
+                  </Button>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{t('deletingEventTitle')}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t('deletingEventDesc')}
-                      </AlertDialogDescription>
+                      <AlertDialogDescription>{t('deletingEventDesc')}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteOccasion(occ.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogAction onClick={() => handleDeleteOccasion(occ.id)} className="bg-destructive text-destructive-foreground">
                         {t('delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -293,7 +323,7 @@ export default function Dashboard() {
             <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-muted">
               <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
               <h3 className="text-2xl font-headline font-bold text-muted-foreground">{t('noEventsFound')}</h3>
-              <p className="text-muted-foreground font-body text-lg">{t('createFirstEvent')}</p>
+              <p className="text-muted-foreground">{t('createFirstEvent')}</p>
             </div>
           )}
         </div>
