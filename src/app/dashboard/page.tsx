@@ -92,9 +92,9 @@ export default function Dashboard() {
   }, [isMounted, newOccasion.eventDate]);
 
   const occasionsRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return collection(db, 'users', user.uid, 'occasions');
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: occasions, isLoading: isOccasionsLoading } = useCollection(occasionsRef);
 
@@ -105,7 +105,7 @@ export default function Dashboard() {
   }, [occasions, searchQuery]);
 
   const handleCreateOccasion = () => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     
     if (!newOccasion.name.trim()) {
       toast({ title: "Validation Error", description: "Event name is required.", variant: "destructive" });
@@ -131,7 +131,7 @@ export default function Dashboard() {
   };
 
   const handleDeleteOccasion = (id: string) => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     const docRef = doc(db, 'users', user.uid, 'occasions', id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Event Deleted", description: "The occasion has been removed." });

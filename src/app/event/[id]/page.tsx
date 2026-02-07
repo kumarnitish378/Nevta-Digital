@@ -59,23 +59,23 @@ export default function EventPage() {
   }, [isMounted]);
 
   const userRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return doc(db, 'users', user.uid);
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: userData } = useDoc(userRef);
 
   const occasionRef = useMemoFirebase(() => {
-    if (!db || !user || !id) return null;
+    if (!db || !user?.uid || !id) return null;
     return doc(db, 'users', user.uid, 'occasions', id as string);
-  }, [db, user, id]);
+  }, [db, user?.uid, id]);
 
   const { data: occasion, isLoading: isOccasionLoading } = useDoc(occasionRef);
 
   const contributionsRef = useMemoFirebase(() => {
-    if (!db || !user || !id) return null;
+    if (!db || !user?.uid || !id) return null;
     return collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
-  }, [db, user, id]);
+  }, [db, user?.uid, id]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection(contributionsRef);
 
@@ -97,7 +97,7 @@ export default function EventPage() {
 
   const handleAddEntry = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (!db || !user || !id || !guestName || !amount) {
+    if (!db || !user?.uid || !id || !guestName || !amount) {
       toast({ title: "Validation Error", description: "Name and Amount are required!", variant: "destructive" });
       return;
     }
@@ -115,10 +115,10 @@ export default function EventPage() {
     setLocationInput("");
     setAmount("");
     toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
-  }, [db, user, id, guestName, locationInput, amount]);
+  }, [db, user?.uid, id, guestName, locationInput, amount]);
 
   const handleDeleteEntry = (entryId: string) => {
-    if (!db || !user || !id) return;
+    if (!db || !user?.uid || !id) return;
     const docRef = doc(db, 'users', user.uid, 'occasions', id as string, 'contributions', entryId);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Entry Deleted", description: "The record has been removed." });
@@ -126,7 +126,7 @@ export default function EventPage() {
 
   const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !db) return;
+    if (!file || !user?.uid || !db) return;
 
     if (!file.type.startsWith('image/')) {
       toast({ title: "Invalid File", description: "Please upload an image file.", variant: "destructive" });
@@ -262,6 +262,11 @@ export default function EventPage() {
                       suppressHydrationWarning
                       autoComplete="off"
                     />
+                    <datalist id="registered-locations" suppressHydrationWarning>
+                      {uniqueLocations.map((loc) => (
+                        <option key={`suggestion-${loc}`} value={loc} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
@@ -394,12 +399,6 @@ export default function EventPage() {
           </div>
         </div>
       </div>
-      
-      <datalist id="registered-locations">
-        {uniqueLocations.map((loc) => (
-          <option key={`suggestion-${loc}`} value={loc} />
-        ))}
-      </datalist>
     </div>
   );
 }
