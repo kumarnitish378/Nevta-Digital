@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Digital Nevta application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the user/operator."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "Mobile number of the user, used for login."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "mobileNumber"
+      ]
+    },
+    "Occasion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Occasion",
+      "type": "object",
+      "description": "Represents an occasion (e.g., wedding) for which Nevta is collected.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the occasion."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the User who owns/operates this occasion. (Relationship: User 1:N Occasion)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the occasion (e.g., Rahul & Priya Wedding)."
+        },
+        "eventDate": {
+          "type": "string",
+          "description": "Date of the event.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "eventDate"
+      ]
+    },
+    "Contribution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contribution",
+      "type": "object",
+      "description": "Represents a single Nevta contribution from a guest.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the contribution."
+        },
+        "occasionId": {
+          "type": "string",
+          "description": "Reference to the Occasion this contribution belongs to. (Relationship: Occasion 1:N Contribution)"
+        },
+        "guestName": {
+          "type": "string",
+          "description": "Name of the guest making the contribution."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location/place of the guest."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the Nevta contribution."
+        },
+        "contributionDate": {
+          "type": "string",
+          "description": "Date and time when the contribution was recorded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "occasionId",
+        "guestName",
+        "amount",
+        "contributionDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Path-based ownership for private user data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/occasions/{occasionId}",
+        "definition": {
+          "entityName": "Occasion",
+          "schema": {
+            "$ref": "#/backend/entities/Occasion"
+          },
+          "description": "Stores occasion details owned by a specific user. Path-based ownership ensures only the user can access their occasions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "occasionId",
+              "description": "The unique identifier of the occasion."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/occasions/{occasionId}/contributions/{contributionId}",
+        "definition": {
+          "entityName": "Contribution",
+          "schema": {
+            "$ref": "#/backend/entities/Contribution"
+          },
+          "description": "Stores contribution details for a specific occasion owned by a user. Path-based ownership ensures only the user can access contributions for their occasions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "occasionId",
+              "description": "The unique identifier of the occasion."
+            },
+            {
+              "name": "contributionId",
+              "description": "The unique identifier of the contribution."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure data consistency, security, and scalability while adhering to the principles of Authorization Independence, Clarity of Intent, and DBAC. It leverages denormalization and structural segregation to simplify security rules and optimize query performance. The structure includes collections for users, occasions, and contributions. User data is stored in `/users/{userId}`. Each user can have multiple occasions stored in `/users/{userId}/occasions/{occasionId}`. Contributions for each occasion are stored in `/users/{userId}/occasions/{occasionId}/contributions/{contributionId}`. This design provides clear ownership, simplifies access control, and supports efficient data retrieval, aligning with the application's requirements for real-time data, offline capabilities, and report generation. Denormalization is not explicitly required in this structure due to the path-based ownership, eliminating the need for `get()` calls in security rules and therefore ensures Authorization Independence. QAPs are supported by the path-based structure, enabling secure list operations within each user's owned data."
+  }
+}

@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict path-based ownership model for the Digital Nevta application.
+     * Authorization is tied directly to the document path, ensuring that a user's data is only 
+     * accessible by that specific user.
+     *
+     * DATA STRUCTURE:
+     * The hierarchy is strictly nested: /users/{userId}/occasions/{occasionId}/contributions/{contributionId}.
+     * This structure allows for clear authorization boundaries and efficient listing of user-owned resources.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Ownership: Every resource is a descendant of a specific userId. Only the authenticated 
+     *    user matching that ID can perform any operation.
+     * 2. Relational Integrity: On creation, we enforce that internal link fields (like ownerId or occasionId) 
+     *    match the document's path to prevent data corruption.
+     * 3. Prototyping Flexibility: We do not enforce strict schema or data types for content fields 
+     *    (e.g., names, amounts) to allow for rapid iteration, focusing purely on secure authorization.
+     * 4. State Safety: All update and delete operations require the document to exist before processing.
+     */
+
+    // --- Helper Functions ---
+
+    /** Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Verifies ownership and ensures the document exists for state-changing operations. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for user profile documents. Uses a self-creation pattern.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid matches {userId} and data.id matches {userId}.
+     * @deny (list) if auth.uid does not match {userId}.
+     * @principle Restricts user profiles to the authenticated owner only.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for Occasions (e.g., weddings) created by a user.
+       * @path /users/{userId}/occasions/{occasionId}
+       * @allow (create) if auth.uid matches {userId} and data.ownerId matches {userId}.
+       * @deny (update) if attempting to change the ownerId.
+       * @principle Ensures only the creator can access or modify their occasions.
+       */
+      match /occasions/{occasionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.ownerId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.ownerId == resource.data.ownerId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Rules for guest contributions for a specific occasion.
+         * @path /users/{userId}/occasions/{occasionId}/contributions/{contributionId}
+         * @allow (create) if auth.uid matches {userId} and data.occasionId matches {occasionId}.
+         * @deny (list) if a user attempts to read contributions from another user's occasion path.
+         * @principle Inherits security from the parent occasion through the nested path.
+         */
+        match /contributions/{contributionId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.occasionId == occasionId;
+          allow update: if isExistingOwner(userId) && request.resource.data.occasionId == resource.data.occasionId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+
+    // Default deny for any paths not explicitly matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
