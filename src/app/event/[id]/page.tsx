@@ -41,6 +41,7 @@ export default function EventPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMounted, setIsMounted] = useState(false);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -88,6 +89,14 @@ export default function EventPage() {
     return Array.from(new Set(locs)).sort();
   }, [entries]);
 
+  const filteredSuggestions = useMemo(() => {
+    if (!locationInput || !showSuggestions) return [];
+    return uniqueLocations.filter(loc => 
+      loc.toLowerCase().includes(locationInput.toLowerCase()) && 
+      loc.toLowerCase() !== locationInput.toLowerCase()
+    );
+  }, [locationInput, uniqueLocations, showSuggestions]);
+
   const filteredEntries = useMemo(() => {
     return (entries || []).filter(e => 
       e.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -114,6 +123,7 @@ export default function EventPage() {
     setGuestName("");
     setLocationInput("");
     setAmount("");
+    setShowSuggestions(false);
     toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
   }, [db, user?.uid, id, guestName, locationInput, amount]);
 
@@ -170,7 +180,7 @@ export default function EventPage() {
   if (!occasion) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <h2 className="text-2xl font-headline font-bold mb-4">Occasion not found</h2>
+        <h2 className="text-2xl font-headline font-bold mb-4 text-accent">Occasion not found</h2>
         <Button asChild><Link href="/dashboard">Back to Dashboard</Link></Button>
       </div>
     );
@@ -248,30 +258,42 @@ export default function EventPage() {
                       suppressHydrationWarning
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label htmlFor="location-input" className="font-body font-bold flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-primary" /> Location / Place
                     </Label>
-                    {isMounted ? (
-                      <div className="relative">
-                        <Input 
-                          id="location-input" 
-                          list="registered-locations"
-                          placeholder="e.g. Jodhpur" 
-                          value={locationInput} 
-                          onChange={e => setLocationInput(e.target.value)} 
-                          className="rounded-lg h-11" 
-                          autoComplete="off"
-                        />
-                        <datalist id="registered-locations">
-                          {uniqueLocations.map((loc) => (
-                            <option key={`suggestion-${loc}`} value={loc} />
+                    <div className="relative">
+                      <Input 
+                        id="location-input" 
+                        placeholder="e.g. Jodhpur" 
+                        value={locationInput} 
+                        onChange={e => {
+                          setLocationInput(e.target.value);
+                          setShowSuggestions(true);
+                        }} 
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        className="rounded-lg h-11" 
+                        autoComplete="off"
+                        suppressHydrationWarning
+                      />
+                      {showSuggestions && filteredSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-48 overflow-auto border-primary/20">
+                          {filteredSuggestions.map((suggestion) => (
+                            <div
+                              key={`suggestion-${suggestion}`}
+                              className="px-4 py-2.5 hover:bg-primary/5 cursor-pointer text-sm font-body text-accent border-b last:border-0 border-muted/30"
+                              onClick={() => {
+                                setLocationInput(suggestion);
+                                setShowSuggestions(false);
+                              }}
+                            >
+                              {suggestion}
+                            </div>
                           ))}
-                        </datalist>
-                      </div>
-                    ) : (
-                      <Input disabled className="rounded-lg h-11" />
-                    )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
