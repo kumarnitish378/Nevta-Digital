@@ -32,9 +32,10 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [newOccasion, setNewOccasion] = useState({ title: "", organizer: "Suresh Kumar", date: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Defer date initialization to prevent hydration mismatch
   useEffect(() => {
+    setIsMounted(true);
     setNewOccasion(prev => ({
       ...prev,
       date: new Date().toISOString().split('T')[0]
@@ -146,7 +147,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <CardDescription className="flex items-center gap-4 pt-2 font-body text-base">
-                  <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {occ.date}</span>
+                  <span className="flex items-center gap-1" suppressHydrationWarning><Calendar className="w-4 h-4" /> {occ.date}</span>
                   <span className="flex items-center gap-1 text-muted-foreground"><User className="w-4 h-4" /> {occ.organizer}</span>
                 </CardDescription>
               </CardHeader>
@@ -158,7 +159,9 @@ export default function Dashboard() {
                   </div>
                   <div className="p-4 bg-accent/5 rounded-xl border border-accent/10">
                     <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Amount</p>
-                    <p className="text-2xl font-bold font-headline text-accent">₹{occ.totalAmount.toLocaleString()}</p>
+                    <p className="text-2xl font-bold font-headline text-accent" suppressHydrationWarning>
+                      ₹{isMounted ? occ.totalAmount.toLocaleString() : occ.totalAmount}
+                    </p>
                   </div>
                 </div>
               </CardContent>
