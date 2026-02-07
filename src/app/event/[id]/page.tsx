@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -36,10 +36,9 @@ export default function EventPage() {
   const [location, setLocation] = useState("");
   const [amount, setAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [reportGeneratedAt, setReportGeneratedAt] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [reportGeneratedAt, setReportGeneratedAt] = useState<string | null>(null);
 
-  // Authentication Guard
   useEffect(() => {
     setIsMounted(true);
     if (!isUserLoading && !user) {
@@ -53,7 +52,6 @@ export default function EventPage() {
     }
   }, [isMounted]);
 
-  // Fetch Occasion Details
   const occasionRef = useMemoFirebase(() => {
     if (!db || !user || !id) return null;
     return doc(db, 'users', user.uid, 'occasions', id as string);
@@ -61,7 +59,6 @@ export default function EventPage() {
 
   const { data: occasion, isLoading: isOccasionLoading } = useDoc(occasionRef);
 
-  // Fetch Contributions
   const contributionsRef = useMemoFirebase(() => {
     if (!db || !user || !id) return null;
     return collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
@@ -78,12 +75,14 @@ export default function EventPage() {
     return Array.from(new Set(locs)).sort();
   }, [entries]);
 
-  const filteredEntries = (entries || []).filter(e => 
-    e.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    e.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEntries = useMemo(() => {
+    return (entries || []).filter(e => 
+      e.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      e.location?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).sort((a, b) => new Date(b.contributionDate || 0).getTime() - new Date(a.contributionDate || 0).getTime());
+  }, [entries, searchQuery]);
 
-  const handleAddEntry = (e: React.FormEvent) => {
+  const handleAddEntry = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!db || !user || !id || !guestName || !amount) {
       toast({ title: "Validation Error", description: "Name and Amount are required!", variant: "destructive" });
@@ -103,7 +102,7 @@ export default function EventPage() {
     setLocation("");
     setAmount("");
     toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
-  };
+  }, [db, user, id, guestName, location, amount]);
 
   const handleDeleteEntry = (entryId: string) => {
     if (!db || !user || !id) return;
@@ -114,20 +113,16 @@ export default function EventPage() {
 
   const exportCSV = () => {
     if (!entries) return;
-    const headers = ["Guest Name", "Location", "Amount", "Date & Time"];
+    const headers = ["Guest Name", "Location", "Amount", "Date"];
     const rows = entries.map(e => [e.guestName, e.location, e.amount, e.contributionDate]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(r => r.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Nevta_Report_${id}.csv`);
+    link.setAttribute("download", `Nevta_Report_${occasion?.name || 'Event'}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const exportPDF = () => {
-    window.print();
   };
 
   if (isUserLoading || isOccasionLoading || isEntriesLoading || !isMounted) {
@@ -157,17 +152,17 @@ export default function EventPage() {
           <div className="bg-primary p-1 rounded-lg">
             <IndianRupee className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-headline text-xl font-bold text-accent">{occasion.name}</span>
+          <span className="font-headline text-xl font-bold text-accent truncate max-w-[150px] sm:max-w-md">{occasion.name}</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="outline" className="font-body hidden sm:flex border-primary text-primary bg-primary/5 px-3 py-1">
+          <Badge variant="outline" className="font-body hidden md:flex border-primary text-primary bg-primary/5 px-3 py-1" suppressHydrationWarning>
             <Calendar className="w-3 h-3 mr-2" /> {occasion.eventDate}
           </Badge>
           <div className="h-4 w-px bg-muted mx-2 hidden sm:block"></div>
-          <Button variant="outline" size="sm" onClick={exportCSV} className="text-accent border-accent hover:bg-accent hover:text-white">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="text-accent border-accent hover:bg-accent hover:text-white hidden sm:flex">
             <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
           </Button>
-          <Button size="sm" onClick={exportPDF} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button size="sm" onClick={() => window.print()} className="bg-primary text-primary-foreground hover:bg-primary/90">
             <FileText className="w-4 h-4 mr-2" /> PDF
           </Button>
         </div>
@@ -177,13 +172,13 @@ export default function EventPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="shadow-sm border-muted overflow-hidden">
             <CardContent className="p-4 bg-primary/5">
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">Guest Count</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Guest Count</p>
               <h2 className="text-3xl font-headline font-bold text-accent">{guestCount}</h2>
             </CardContent>
           </Card>
           <Card className="shadow-sm border-muted overflow-hidden">
             <CardContent className="p-4 bg-accent/5">
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">Total Collection</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Total Collection</p>
               <h2 className="text-3xl font-headline font-bold text-accent" suppressHydrationWarning>
                 ₹{totalAmount.toLocaleString()}
               </h2>
@@ -191,7 +186,7 @@ export default function EventPage() {
           </Card>
           <div className="hidden lg:block col-span-2">
              <div className="h-full flex items-center px-6 rounded-xl border-2 border-dashed border-muted text-muted-foreground font-body italic text-sm">
-                Organizer: {user?.displayName || 'Owner'} • Last synced just now
+                Organizer: {user?.displayName || 'Owner'} • Live Cloud Sync Active
              </div>
           </div>
         </div>
@@ -200,8 +195,8 @@ export default function EventPage() {
           <div className="lg:col-span-4 print:hidden">
             <Card className="shadow-lg border-primary/20 sticky top-24">
               <CardHeader className="bg-primary/10">
-                <CardTitle className="font-headline text-xl text-accent">Add New Entry</CardTitle>
-                <CardDescription className="font-body text-sm">Recording in real-time</CardDescription>
+                <CardTitle className="font-headline text-xl text-accent">New Sagoon Entry</CardTitle>
+                <CardDescription className="font-body text-sm">Enter guest details below</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddEntry} className="space-y-4" suppressHydrationWarning>
@@ -231,6 +226,7 @@ export default function EventPage() {
                       onChange={e => setLocation(e.target.value)} 
                       className="rounded-lg h-11" 
                       suppressHydrationWarning
+                      autoComplete="off"
                     />
                   </div>
                   <div className="space-y-2">
@@ -240,7 +236,7 @@ export default function EventPage() {
                     <Input id="amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="rounded-lg h-11 text-lg font-bold" required suppressHydrationWarning />
                   </div>
                   <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md">
-                    <Plus className="w-5 h-5 mr-2" /> Add Entry
+                    <Plus className="w-5 h-5 mr-2" /> Add Record
                   </Button>
                 </form>
               </CardContent>
@@ -250,13 +246,11 @@ export default function EventPage() {
           <div className="lg:col-span-8">
             <Card className="shadow-sm border-muted print:border-none print:shadow-none">
               <CardHeader className="flex flex-row items-center justify-between print:hidden">
-                <div>
-                  <CardTitle className="font-headline text-xl text-accent">Recent Entries</CardTitle>
-                </div>
-                <div className="relative w-1/2 max-w-[250px]">
+                <CardTitle className="font-headline text-xl text-accent">Recent Entries</CardTitle>
+                <div className="relative w-1/2 max-w-[200px]">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input 
-                    placeholder="Search name..." 
+                    placeholder="Search..." 
                     className="pl-9 h-9 text-xs rounded-lg"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -270,7 +264,7 @@ export default function EventPage() {
                     <TableRow>
                       <TableHead className="font-bold text-accent font-headline">Guest Name</TableHead>
                       <TableHead className="font-bold text-accent font-headline">Location</TableHead>
-                      <TableHead className="font-bold text-accent font-headline text-right">Amount (₹)</TableHead>
+                      <TableHead className="font-bold text-accent font-headline text-right">Amount</TableHead>
                       <TableHead className="font-bold text-accent font-headline text-right print:table-cell hidden sm:table-cell">Date</TableHead>
                       <TableHead className="print:hidden w-[50px]"></TableHead>
                     </TableRow>
@@ -280,7 +274,7 @@ export default function EventPage() {
                       <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors">
                         <TableCell className="font-bold font-body">{entry.guestName}</TableCell>
                         <TableCell className="text-muted-foreground font-body">{entry.location || '-'}</TableCell>
-                        <TableCell className="text-right font-headline font-bold text-accent text-lg" suppressHydrationWarning>
+                        <TableCell className="text-right font-headline font-bold text-accent" suppressHydrationWarning>
                           ₹{entry.amount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell" suppressHydrationWarning>
@@ -323,9 +317,9 @@ export default function EventPage() {
             </Card>
             
             <div className="hidden print:block mt-12 pt-8 border-t border-dotted border-gray-400">
-               <div className="grid grid-cols-2 text-sm text-gray-500 font-body">
+               <div className="grid grid-cols-2 text-xs text-gray-500 font-body">
                   <div>Report Generated by: <b>Nevta Digital</b></div>
-                  <div className="text-right" suppressHydrationWarning>Generated on: {reportGeneratedAt || '...'}</div>
+                  <div className="text-right" suppressHydrationWarning>Date: {reportGeneratedAt || '...'}</div>
                </div>
             </div>
           </div>
