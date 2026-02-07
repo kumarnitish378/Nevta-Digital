@@ -5,8 +5,8 @@
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  // Return an empty array or pre-defined list of IDs if known.
-  // For output: export, this must provide all possible segments or dynamicParams: false.
+  // Return an empty array to satisfy static export requirements
+  // since we use query parameters (/event?id=...) for dynamic data.
   return [];
 }
 
