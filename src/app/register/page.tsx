@@ -9,19 +9,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { IndianRupee, Loader2 } from 'lucide-react';
+import { useAuth, initiateEmailSignUp } from '@/firebase';
+import { updateProfile } from 'firebase/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const auth = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate auth
-    setTimeout(() => {
+    
+    try {
+      initiateEmailSignUp(auth, email, password);
+      // We'll wait a moment for the user to be created then try to update profile
+      setTimeout(async () => {
+        if (auth.currentUser) {
+          await updateProfile(auth.currentUser, { displayName: name });
+        }
+        router.push('/dashboard');
+      }, 2000);
+    } catch (err) {
+      console.error(err);
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
@@ -42,15 +57,37 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="font-body">Full Name (Owner/Operator)</Label>
-              <Input id="name" placeholder="John Doe" required className="rounded-lg" />
+              <Input 
+                id="name" 
+                placeholder="John Doe" 
+                required 
+                className="rounded-lg"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
-              <Input id="mobile" type="tel" placeholder="Enter your 10-digit mobile" required className="rounded-lg" />
+              <Label htmlFor="email" className="font-body">Email Address</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="you@example.com" 
+                required 
+                className="rounded-lg"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password font-body">Create Password</Label>
-              <Input id="password" type="password" required className="rounded-lg" />
+              <Label htmlFor="password">Create Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                className="rounded-lg"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-lg" disabled={isLoading}>
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Registration"}

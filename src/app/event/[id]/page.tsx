@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,18 +23,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Mocked Data
-const INITIAL_ENTRIES = [
-  { id: '1', guestName: 'Ramesh Sharma', location: 'Jaipur', amount: 501, timestamp: '2024-05-15 10:30 AM' },
-  { id: '2', guestName: 'Sunita Devi', location: 'Delhi', amount: 1100, timestamp: '2024-05-15 11:15 AM' },
-  { id: '3', guestName: 'Amit Verma', location: 'Agra', amount: 2100, timestamp: '2024-05-15 11:45 AM' },
-];
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 
 export default function EventPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [entries, setEntries] = useState(INITIAL_ENTRIES);
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
+  
   const [guestName, setGuestName] = useState("");
   const [location, setLocation] = useState("");
   const [amount, setAmount] = useState("");
@@ -47,35 +44,52 @@ export default function EventPage() {
     setReportGeneratedAt(new Date().toLocaleString());
   }, []);
 
-  const totalAmount = useMemo(() => entries.reduce((acc, curr) => acc + curr.amount, 0), [entries]);
-  const guestCount = entries.length;
+  // Fetch Occasion Details
+  const occasionRef = useMemoFirebase(() => {
+    if (!db || !user || !id) return null;
+    return doc(db, 'users', user.uid, 'occasions', id as string);
+  }, [db, user, id]);
+
+  const { data: occasion, isLoading: isOccasionLoading } = useDoc(occasionRef);
+
+  // Fetch Contributions
+  const contributionsRef = useMemoFirebase(() => {
+    if (!db || !user || !id) return null;
+    return collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
+  }, [db, user, id]);
+
+  const { data: entries, isLoading: isEntriesLoading } = useCollection(contributionsRef);
+
+  const totalAmount = useMemo(() => (entries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0), [entries]);
+  const guestCount = entries?.length || 0;
 
   const uniqueLocations = useMemo(() => {
+    if (!entries) return [];
     const locs = entries.map(e => e.location).filter(Boolean);
     return Array.from(new Set(locs)).sort();
   }, [entries]);
 
-  const filteredEntries = entries.filter(e => 
-    e.guestName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    e.location.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEntries = (entries || []).filter(e => 
+    e.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    e.location?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guestName || !amount) {
+    if (!db || !user || !id || !guestName || !amount) {
       toast({ title: "Validation Error", description: "Name and Amount are required!", variant: "destructive" });
       return;
     }
 
-    const newEntry = {
-      id: Date.now().toString(),
+    const colRef = collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
+    addDocumentNonBlocking(colRef, {
       guestName,
       location,
       amount: parseFloat(amount),
-      timestamp: new Date().toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-    };
+      contributionDate: new Date().toISOString(),
+      occasionId: id
+    });
 
-    setEntries([newEntry, ...entries]);
     setGuestName("");
     setLocation("");
     setAmount("");
@@ -83,13 +97,16 @@ export default function EventPage() {
   };
 
   const handleDeleteEntry = (entryId: string) => {
-    setEntries(entries.filter(e => e.id !== entryId));
+    if (!db || !user || !id) return;
+    const docRef = doc(db, 'users', user.uid, 'occasions', id as string, 'contributions', entryId);
+    deleteDocumentNonBlocking(docRef);
     toast({ title: "Entry Deleted", description: "The record has been removed." });
   };
 
   const exportCSV = () => {
+    if (!entries) return;
     const headers = ["Guest Name", "Location", "Amount", "Date & Time"];
-    const rows = entries.map(e => [e.guestName, e.location, e.amount, e.timestamp]);
+    const rows = entries.map(e => [e.guestName, e.location, e.amount, e.contributionDate]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(r => r.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -104,6 +121,23 @@ export default function EventPage() {
     window.print();
   };
 
+  if (isUserLoading || isOccasionLoading || isEntriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!occasion) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <h2 className="text-2xl font-headline font-bold mb-4">Occasion not found</h2>
+        <Button asChild><Link href="/dashboard">Back to Dashboard</Link></Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="px-6 h-16 flex items-center border-b bg-white shadow-sm sticky top-0 z-50 print:hidden">
@@ -114,11 +148,11 @@ export default function EventPage() {
           <div className="bg-primary p-1 rounded-lg">
             <IndianRupee className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-headline text-xl font-bold text-accent">Rahul & Priya Wedding</span>
+          <span className="font-headline text-xl font-bold text-accent">{occasion.name}</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Badge variant="outline" className="font-body hidden sm:flex border-primary text-primary bg-primary/5 px-3 py-1">
-            <Calendar className="w-3 h-3 mr-2" /> May 15, 2024
+            <Calendar className="w-3 h-3 mr-2" /> {occasion.eventDate}
           </Badge>
           <div className="h-4 w-px bg-muted mx-2 hidden sm:block"></div>
           <Button variant="outline" size="sm" onClick={exportCSV} className="text-accent border-accent hover:bg-accent hover:text-white">
@@ -148,7 +182,7 @@ export default function EventPage() {
           </Card>
           <div className="hidden lg:block col-span-2">
              <div className="h-full flex items-center px-6 rounded-xl border-2 border-dashed border-muted text-muted-foreground font-body italic text-sm">
-                Organizer: Suresh Kumar • Last synced just now
+                Organizer: {user?.displayName || 'Owner'} • Last synced just now
              </div>
           </div>
         </div>
@@ -228,7 +262,7 @@ export default function EventPage() {
                       <TableHead className="font-bold text-accent font-headline">Guest Name</TableHead>
                       <TableHead className="font-bold text-accent font-headline">Location</TableHead>
                       <TableHead className="font-bold text-accent font-headline text-right">Amount (₹)</TableHead>
-                      <TableHead className="font-bold text-accent font-headline text-right print:table-cell hidden sm:table-cell">Time</TableHead>
+                      <TableHead className="font-bold text-accent font-headline text-right print:table-cell hidden sm:table-cell">Date</TableHead>
                       <TableHead className="print:hidden w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -241,7 +275,7 @@ export default function EventPage() {
                           ₹{isMounted ? entry.amount.toLocaleString() : entry.amount}
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell" suppressHydrationWarning>
-                          {entry.timestamp}
+                          {entry.contributionDate ? new Date(entry.contributionDate).toLocaleDateString() : '-'}
                         </TableCell>
                         <TableCell className="print:hidden text-right">
                            <AlertDialog>
@@ -289,7 +323,6 @@ export default function EventPage() {
         </div>
       </div>
       
-      {/* Stable Datalist for Location Suggestions */}
       {isMounted && (
         <datalist id="registered-locations">
           {uniqueLocations.map((loc) => (

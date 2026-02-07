@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -20,17 +20,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Mocked Data
-const INITIAL_OCCASIONS = [
-  { id: '1', title: 'Rahul & Priya Wedding', organizer: 'Suresh Kumar', date: '2024-05-15', guestCount: 154, totalAmount: 254000 },
-  { id: '2', title: 'Aman Birthday', organizer: 'Suresh Kumar', date: '2024-03-10', guestCount: 45, totalAmount: 12500 },
-];
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 export default function Dashboard() {
-  const [occasions, setOccasions] = useState(INITIAL_OCCASIONS);
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [newOccasion, setNewOccasion] = useState({ title: "", organizer: "Suresh Kumar", date: "" });
+  const [newOccasion, setNewOccasion] = useState({ name: "", eventDate: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -38,30 +35,48 @@ export default function Dashboard() {
     setIsMounted(true);
     setNewOccasion(prev => ({
       ...prev,
-      date: new Date().toISOString().split('T')[0]
+      eventDate: new Date().toISOString().split('T')[0]
     }));
   }, []);
 
-  const filteredOccasions = occasions.filter(occ => 
-    occ.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const occasionsRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return collection(db, 'users', user.uid, 'occasions');
+  }, [db, user]);
+
+  const { data: occasions, isLoading: isOccasionsLoading } = useCollection(occasionsRef);
+
+  const filteredOccasions = (occasions || []).filter(occ => 
+    occ.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreateOccasion = () => {
-    const id = (occasions.length + 1).toString();
-    const createdOccasion = {
-      id,
+    if (!db || !user || !newOccasion.name) return;
+    
+    const colRef = collection(db, 'users', user.uid, 'occasions');
+    addDocumentNonBlocking(colRef, {
       ...newOccasion,
-      guestCount: 0,
-      totalAmount: 0
-    };
-    setOccasions([createdOccasion, ...occasions]);
+      ownerId: user.uid,
+      createdAt: new Date().toISOString()
+    });
+    
     setIsDialogOpen(false);
-    setNewOccasion({ title: "", organizer: "Suresh Kumar", date: new Date().toISOString().split('T')[0] });
+    setNewOccasion({ name: "", eventDate: new Date().toISOString().split('T')[0] });
   };
 
   const handleDeleteOccasion = (id: string) => {
-    setOccasions(occasions.filter(o => o.id !== id));
+    if (!db || !user) return;
+    const docRef = doc(db, 'users', user.uid, 'occasions', id);
+    deleteDocumentNonBlocking(docRef);
   };
+
+  if (isUserLoading || isOccasionsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,7 +90,7 @@ export default function Dashboard() {
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4 hidden sm:flex">
              <User className="w-4 h-4" />
-             <span className="font-body">Suresh Kumar</span>
+             <span className="font-body">{user?.displayName || 'User'}</span>
           </div>
           <Button asChild variant="ghost" size="sm" className="font-bold text-red-600 hover:bg-red-50">
             <Link href="/login">Logout</Link>
@@ -106,15 +121,11 @@ export default function Dashboard() {
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="title" className="font-body">Occasion Title</Label>
-                  <Input id="title" value={newOccasion.title} onChange={e => setNewOccasion({...newOccasion, title: e.target.value})} placeholder="e.g. Rahul Weds Priya" suppressHydrationWarning />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="organizer" className="font-body">Organizer Name</Label>
-                  <Input id="organizer" value={newOccasion.organizer} onChange={e => setNewOccasion({...newOccasion, organizer: e.target.value})} suppressHydrationWarning />
+                  <Input id="title" value={newOccasion.name} onChange={e => setNewOccasion({...newOccasion, name: e.target.value})} placeholder="e.g. Rahul Weds Priya" suppressHydrationWarning />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date" className="font-body">Event Date</Label>
-                  <Input id="date" type="date" value={newOccasion.date} onChange={e => setNewOccasion({...newOccasion, date: e.target.value})} suppressHydrationWarning />
+                  <Input id="date" type="date" value={newOccasion.eventDate} onChange={e => setNewOccasion({...newOccasion, eventDate: e.target.value})} suppressHydrationWarning />
                 </div>
               </div>
               <DialogFooter>
@@ -141,28 +152,15 @@ export default function Dashboard() {
             <Card key={occ.id} className="hover:shadow-md transition-all group border-muted shadow-sm overflow-hidden flex flex-col">
               <CardHeader className="bg-secondary/10 border-b pb-4">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="font-headline text-2xl text-accent group-hover:text-primary transition-colors">{occ.title}</CardTitle>
-                  <div className="bg-white px-3 py-1 rounded-full text-xs font-bold border border-muted text-muted-foreground">
-                    ID: #{occ.id}
-                  </div>
+                  <CardTitle className="font-headline text-2xl text-accent group-hover:text-primary transition-colors">{occ.name}</CardTitle>
                 </div>
                 <CardDescription className="flex items-center gap-4 pt-2 font-body text-base">
-                  <span className="flex items-center gap-1" suppressHydrationWarning><Calendar className="w-4 h-4" /> {occ.date}</span>
-                  <span className="flex items-center gap-1 text-muted-foreground"><User className="w-4 h-4" /> {occ.organizer}</span>
+                  <span className="flex items-center gap-1" suppressHydrationWarning><Calendar className="w-4 h-4" /> {occ.eventDate}</span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 flex-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Guests</p>
-                    <p className="text-2xl font-bold font-headline text-accent">{occ.guestCount}</p>
-                  </div>
-                  <div className="p-4 bg-accent/5 rounded-xl border border-accent/10">
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Amount</p>
-                    <p className="text-2xl font-bold font-headline text-accent" suppressHydrationWarning>
-                      ₹{isMounted ? occ.totalAmount.toLocaleString() : occ.totalAmount}
-                    </p>
-                  </div>
+                <div className="h-24 flex items-center justify-center bg-primary/5 rounded-xl border border-primary/10 italic text-muted-foreground text-sm">
+                   Open event to see collections
                 </div>
               </CardContent>
               <CardFooter className="bg-white border-t p-4 flex gap-2">
@@ -182,7 +180,7 @@ export default function Dashboard() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Occasion?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete "<strong>{occ.title}</strong>" and all its associated Nevta records. This action cannot be undone.
+                        This will permanently delete "<strong>{occ.name}</strong>" and all its associated Nevta records. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
