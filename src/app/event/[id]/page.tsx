@@ -163,25 +163,27 @@ export default function EventPage() {
                     <Label htmlFor="guestName" className="font-body font-bold flex items-center gap-2">
                       <User className="w-4 h-4 text-primary" /> Guest Name
                     </Label>
-                    <Input id="guestName" placeholder="e.g. Mukesh Jain" value={guestName} onChange={e => setGuestName(e.target.value)} className="rounded-lg h-11" required />
+                    <Input 
+                      id="guestName" 
+                      placeholder="e.g. Mukesh Jain" 
+                      value={guestName} 
+                      onChange={e => setGuestName(e.target.value)} 
+                      className="rounded-lg h-11" 
+                      required 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="font-body font-bold flex items-center gap-2">
+                    <Label htmlFor="location-input" className="font-body font-bold flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-primary" /> Location / Place
                     </Label>
                     <Input 
-                      id="location" 
-                      list="location-suggestions"
+                      id="location-input" 
+                      list="registered-locations"
                       placeholder="e.g. Jodhpur" 
                       value={location} 
                       onChange={e => setLocation(e.target.value)} 
                       className="rounded-lg h-11" 
                     />
-                    <datalist id="location-suggestions">
-                      {uniqueLocations.map((loc) => (
-                        <option key={loc} value={loc} />
-                      ))}
-                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
@@ -231,7 +233,7 @@ export default function EventPage() {
                         <TableCell className="text-muted-foreground font-body">{entry.location || '-'}</TableCell>
                         <TableCell className="text-right font-headline font-bold text-accent text-lg">₹{entry.amount.toLocaleString()}</TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell">{entry.timestamp}</TableCell>
-                        <TableCell className="print:hidden">
+                        <TableCell className="print:hidden text-right">
                            <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500">
@@ -276,6 +278,13 @@ export default function EventPage() {
           </div>
         </div>
       </div>
+      
+      {/* Stable Datalist for Location Suggestions */}
+      <datalist id="registered-locations">
+        {uniqueLocations.map((loc) => (
+          <option key={`suggestion-${loc}`} value={loc} />
+        ))}
+      </datalist>
     </div>
   );
 }
