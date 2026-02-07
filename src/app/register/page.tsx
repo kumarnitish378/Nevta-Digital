@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { IndianRupee, Loader2 } from 'lucide-react';
+import { IndianRupee, Loader2, Phone } from 'lucide-react';
 import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,29 +20,36 @@ export default function RegisterPage() {
   const db = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (mobile.length < 10) {
+      toast({ title: "Invalid Mobile", description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true);
     
+    // Internal mapping of mobile to a unique email-like identifier for Firebase Auth
+    const dummyEmail = `${mobile}@nevta.digital`;
+    
     try {
-      initiateEmailSignUp(auth, email, password);
-      // Wait for the auth state to catch up
+      initiateEmailSignUp(auth, dummyEmail, password);
+      
       const checkAuthInterval = setInterval(async () => {
         if (auth.currentUser) {
           clearInterval(checkAuthInterval);
           
-          // 1. Update Profile Display Name
           await updateProfile(auth.currentUser, { displayName: name });
           
-          // 2. Create User Document in Firestore to satisfy security rules
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           setDocumentNonBlocking(userDocRef, {
             id: auth.currentUser.uid,
             name: name,
-            email: email,
+            mobileNumber: mobile,
             createdAt: new Date().toISOString()
           }, { merge: true });
 
@@ -49,15 +57,14 @@ export default function RegisterPage() {
         }
       }, 500);
 
-      // Timeout after 10 seconds if it fails
       setTimeout(() => {
         clearInterval(checkAuthInterval);
         setIsLoading(false);
       }, 10000);
 
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
       setIsLoading(false);
+      toast({ title: "Registration Failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -72,33 +79,37 @@ export default function RegisterPage() {
           </div>
           <CardTitle className="text-3xl font-headline font-bold text-accent">Create Account</CardTitle>
           <CardDescription className="font-body text-base">
-            Join Nevta Digital to securely manage your events
+            Join Nevta Digital with your mobile number
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="font-body">Full Name (Owner/Operator)</Label>
+              <Label htmlFor="name" className="font-body">Full Name</Label>
               <Input 
                 id="name" 
-                placeholder="John Doe" 
+                placeholder="Enter your name" 
                 required 
-                className="rounded-lg"
+                className="rounded-lg h-12"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-body">Email Address</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="you@example.com" 
-                required 
-                className="rounded-lg"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  id="mobile" 
+                  type="tel"
+                  placeholder="9876543210" 
+                  required 
+                  maxLength={10}
+                  className="rounded-lg h-12 pl-10"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Create Password</Label>
@@ -106,13 +117,13 @@ export default function RegisterPage() {
                 id="password" 
                 type="password" 
                 required 
-                className="rounded-lg"
+                className="rounded-lg h-12"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-lg" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Registration"}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Register Now"}
             </Button>
           </form>
         </CardContent>

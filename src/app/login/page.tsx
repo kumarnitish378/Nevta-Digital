@@ -8,31 +8,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { IndianRupee, Loader2 } from 'lucide-react';
+import { IndianRupee, Loader2, Phone } from 'lucide-react';
 import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { toast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (mobile.length < 10) {
+      toast({ title: "Invalid Mobile", description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true);
+    
+    // Internal mapping of mobile to dummy email for Firebase Auth
+    const dummyEmail = `${mobile}@nevta.digital`;
+    
     try {
-      // For simplicity in prototype, we'll assume email exists. 
-      // Use standard email format for demo.
-      initiateEmailSignIn(auth, email, password);
-      // The state listener in Provider will handle the redirect if successful
-      // but for immediate UI feedback we'll wait a bit then check or just redirect if no error thrown
+      initiateEmailSignIn(auth, dummyEmail, password);
+      
+      // We check for auth state change or use a timeout to handle redirection
+      const checkAuthInterval = setInterval(() => {
+        if (auth.currentUser) {
+          clearInterval(checkAuthInterval);
+          router.push('/dashboard');
+        }
+      }, 500);
+
       setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
-    } catch (err) {
-      console.error(err);
+        clearInterval(checkAuthInterval);
+        setIsLoading(false);
+      }, 5000);
+
+    } catch (err: any) {
       setIsLoading(false);
+      toast({ title: "Login Failed", description: "Please check your mobile number and password.", variant: "destructive" });
     }
   };
 
@@ -47,22 +65,26 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-3xl font-headline font-bold text-accent">Welcome Back</CardTitle>
           <CardDescription className="font-body text-base">
-            Login with your registered email
+            Login with your mobile number
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-body">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="you@example.com" 
-                required 
-                className="rounded-lg"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  id="mobile" 
+                  type="tel"
+                  placeholder="9876543210" 
+                  required 
+                  maxLength={10}
+                  className="rounded-lg h-12 pl-10"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -70,12 +92,12 @@ export default function LoginPage() {
                 id="password" 
                 type="password" 
                 required 
-                className="rounded-lg"
+                className="rounded-lg h-12"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-lg" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md" disabled={isLoading}>
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Login Now"}
             </Button>
           </form>
