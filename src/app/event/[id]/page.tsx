@@ -2,8 +2,7 @@ import { redirect } from 'next/navigation';
 
 /**
  * Static placeholder for the [id] segment.
- * Redirects to the search-param based event page to maintain 
- * compatibility with static exports.
+ * This satisfies the 'output: export' requirement by providing a fallback path.
  */
 export function generateStaticParams() {
   return [{ id: 'details' }];
@@ -11,5 +10,7 @@ export function generateStaticParams() {
 
 export default async function EventIdPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  
+  // We perform the redirect to the query-param version which is 100% static-safe.
   redirect(`/event/?id=${id}`);
 }
