@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "wedding-bg",
+      "description": "Traditional Indian wedding decor",
+      "imageUrl": "https://images.unsplash.com/photo-1632316962873-47ee3d309f02?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3ZWRkaW5nJTIwZGVjb3JhdGlvbnxlbnwwfHx8fDE3NzAzOTI1MTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wedding decoration"
+    },
+    {
+      "id": "celebration-icon",
+      "description": "Celebration and gifts",
+      "imageUrl": "https://images.unsplash.com/photo-1607798421923-ff44f5e5e343?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjZWxlYnJhdGlvbiUyMGdpZnR8ZW58MHx8fHwxNzcwNDcwMzk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "celebration gift"
+    }
+  ]
 }
