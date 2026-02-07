@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { IndianRupee, Users, ShieldCheck, CloudDownload, Loader2 } from 'lucide-react';
+import { IndianRupee, Users, ShieldCheck, CloudDownload, Loader2, Smartphone } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function Home() {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
+  const DOWNLOAD_URL = "https://drive.google.com/file/d/1LaJ8y0Q5dwN7uKBd2FXdt4htmiVUQ-L0/view?usp=sharing";
 
   useEffect(() => {
     setIsMounted(true);
@@ -35,6 +36,11 @@ export default function Home() {
         </Link>
         <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <LanguageToggle />
+          <Button asChild variant="ghost" size="sm" className="hidden sm:flex text-primary">
+            <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+              <Smartphone className="w-4 h-4 mr-2" /> {t('downloadApp')}
+            </a>
+          </Button>
           <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
             {t('login')}
           </Link>
@@ -57,12 +63,14 @@ export default function Home() {
                   {t('landingSubtitle')}
                 </p>
               </div>
-              <div className="space-x-4">
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full h-14 text-lg">
                   <Link href="/register">{t('getStarted')}</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8 rounded-full">
-                  <Link href="/login">{t('login')}</Link>
+                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8 rounded-full h-14 text-lg">
+                  <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+                    <Smartphone className="w-5 h-5 mr-2" /> {t('downloadApp')}
+                  </a>
                 </Button>
               </div>
             </div>

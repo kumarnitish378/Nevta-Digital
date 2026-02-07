@@ -1,16 +1,15 @@
-
 /**
- * This route is intended to be replaced by /event?id=... for static exports.
- * We provide generateStaticParams and dynamicParams = false to satisfy the 
- * 'output: export' requirement of Next.js during the build process.
+ * Static export placeholder for dynamic [id] route.
+ * Redirects or renders nothing if not built with specific IDs.
  */
-
 export const dynamicParams = false;
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  // Return an empty array or pre-defined list of IDs if known.
+  // For output: export, this must provide all possible segments or dynamicParams: false.
   return [];
 }
 
-export default function Page() {
+export default function EventIdPage() {
   return null;
 }

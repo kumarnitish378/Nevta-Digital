@@ -71,7 +71,8 @@ export const translations: Record<Language, Record<string, string>> = {
     qrActive: "Personal QR Active",
     qrDemo: "Showing Demo QR - Click upload to change",
     entries: "Entries",
-    total: "Total"
+    total: "Total",
+    downloadApp: "Download App"
   },
   hi: {
     appName: "नेवता डिजिटल",
@@ -143,6 +144,7 @@ export const translations: Record<Language, Record<string, string>> = {
     qrActive: "व्यक्तिगत QR सक्रिय",
     qrDemo: "डेमो QR दिखाया जा रहा है - बदलने के लिए अपलोड पर क्लिक करें",
     entries: "एंट्री",
-    total: "कुल"
+    total: "कुल",
+    downloadApp: "ऐप डाउनलोड करें"
   }
 };
