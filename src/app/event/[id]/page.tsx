@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function EventPage() {
@@ -74,7 +74,7 @@ export default function EventPage() {
 
   const contributionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || !id) return null;
-    return collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
+    return query(collection(db, 'users', user.uid, 'occasions', id as string, 'contributions'), orderBy('contributionDate', 'desc'));
   }, [db, user?.uid, id]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection(contributionsRef);
@@ -92,7 +92,7 @@ export default function EventPage() {
     return (entries || []).filter(e => 
       e.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
       e.location?.toLowerCase().includes(searchQuery.toLowerCase())
-    ).sort((a, b) => new Date(b.contributionDate || 0).getTime() - new Date(a.contributionDate || 0).getTime());
+    );
   }, [entries, searchQuery]);
 
   const handleAddEntry = useCallback((e: React.FormEvent) => {
@@ -252,21 +252,26 @@ export default function EventPage() {
                     <Label htmlFor="location-input" className="font-body font-bold flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-primary" /> Location / Place
                     </Label>
-                    <Input 
-                      id="location-input" 
-                      list="registered-locations"
-                      placeholder="e.g. Jodhpur" 
-                      value={locationInput} 
-                      onChange={e => setLocationInput(e.target.value)} 
-                      className="rounded-lg h-11" 
-                      suppressHydrationWarning
-                      autoComplete="off"
-                    />
-                    <datalist id="registered-locations" suppressHydrationWarning>
-                      {uniqueLocations.map((loc) => (
-                        <option key={`suggestion-${loc}`} value={loc} />
-                      ))}
-                    </datalist>
+                    {isMounted ? (
+                      <div className="relative">
+                        <Input 
+                          id="location-input" 
+                          list="registered-locations"
+                          placeholder="e.g. Jodhpur" 
+                          value={locationInput} 
+                          onChange={e => setLocationInput(e.target.value)} 
+                          className="rounded-lg h-11" 
+                          autoComplete="off"
+                        />
+                        <datalist id="registered-locations">
+                          {uniqueLocations.map((loc) => (
+                            <option key={`suggestion-${loc}`} value={loc} />
+                          ))}
+                        </datalist>
+                      </div>
+                    ) : (
+                      <Input disabled className="rounded-lg h-11" />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">

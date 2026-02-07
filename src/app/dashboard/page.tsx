@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 
 function OccasionStats({ userId, occasionId }: { userId: string; occasionId: string }) {
@@ -93,7 +93,7 @@ export default function Dashboard() {
 
   const occasionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return collection(db, 'users', user.uid, 'occasions');
+    return query(collection(db, 'users', user.uid, 'occasions'), orderBy('createdAt', 'desc'));
   }, [db, user?.uid]);
 
   const { data: occasions, isLoading: isOccasionsLoading } = useCollection(occasionsRef);
@@ -101,7 +101,7 @@ export default function Dashboard() {
   const filteredOccasions = useMemo(() => {
     return (occasions || []).filter(occ => 
       occ.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    ).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    );
   }, [occasions, searchQuery]);
 
   const handleCreateOccasion = () => {
