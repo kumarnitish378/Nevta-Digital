@@ -1,4 +1,3 @@
-
 apply plugin: 'com.android.application'
 
 android {
@@ -6,14 +5,15 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId "com.nevtadigital.app"
-        minSdk 22
+        minSdk 23
         targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Strings are not to be extracted from the web assets
-             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+             // Fragments allowed queries here
+             // https://developer.android.com/about/versions/11/privacy/package-visibility
+             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:f_*:g_*:_*:CVS:thumbs.db:picasa.ini:!*~'
         }
     }
     buildTypes {
@@ -27,27 +27,30 @@ android {
 repositories {
     google()
     mavenCentral()
+    flatDir{
+        dirs 'libs'
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-
-    // This is managed by Capacitor, added here for safety
-    try {
-        implementation project(':capacitor-cordova-android-plugins')
-    } catch (Exception e) {
-        // Ignored if no plugins are present
-    }
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
 
+apply plugin: 'com.google.gms.google-services'
+
 try {
-    apply from: 'capacitor.build.gradle'
+    def servicesConfigAlt = file('google-services.json')
+    if (servicesConfigAlt.exists()) {
+        apply plugin: 'com.google.gms.google-services'
+    }
 } catch (Exception e) {
-    println("Warning: capacitor.build.gradle not found.")
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
