@@ -32,7 +32,7 @@ export default function Home() {
           <div className="bg-primary p-1.5 rounded-lg">
             <IndianRupee className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-headline text-2xl font-bold text-accent">Nevta Digital</span>
+          <span className="font-headline text-2xl font-bold text-accent">{t('appName')}</span>
         </Link>
         <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <LanguageToggle />
@@ -57,10 +57,10 @@ export default function Home() {
             <div className="flex flex-col items-center space-y-6">
               <div className="space-y-4">
                 <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl text-accent max-w-4xl mx-auto">
-                  Nevta Digital: The Future of Traditional Event Record Keeping
+                  {t('landingTitle')}
                 </h1>
                 <p className="mx-auto max-w-[800px] text-muted-foreground md:text-2xl font-body">
-                  Ditch the paper notebooks. Record, manage, and preserve Sagoon contributions for all your social occasions securely with Nevta Digital.
+                  {t('landingSubtitle')}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -80,8 +80,8 @@ export default function Home() {
         <section className="w-full py-20 bg-white">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-headline font-bold text-accent mb-4">Why Millions Choose Nevta Digital?</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Simplify your social event management with our modern, tradition-respecting toolkit.</p>
+              <h2 className="text-3xl md:text-5xl font-headline font-bold text-accent mb-4">{t('whyChooseTitle')}</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">{t('whyChooseSubtitle')}</p>
             </div>
             <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
               <Card className="border-none shadow-sm bg-secondary/20 hover:shadow-md transition-shadow">
@@ -89,9 +89,9 @@ export default function Home() {
                   <div className="p-4 bg-primary/20 w-fit rounded-2xl">
                     <ShieldCheck className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold font-headline text-accent">Secure & Permanent Storage</h3>
+                  <h3 className="text-2xl font-bold font-headline text-accent">{t('feature1Title')}</h3>
                   <p className="text-muted-foreground font-body leading-relaxed">
-                    Never lose a name or amount again. Nevta Digital uses high-level encryption to ensure your celebratory records are safe for generations.
+                    {t('feature1Desc')}
                   </p>
                 </CardContent>
               </Card>
@@ -100,9 +100,9 @@ export default function Home() {
                   <div className="p-4 bg-primary/20 w-fit rounded-2xl">
                     <Users className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold font-headline text-accent">Real-time Data Insights</h3>
+                  <h3 className="text-2xl font-bold font-headline text-accent">{t('feature2Title')}</h3>
                   <p className="text-muted-foreground font-body leading-relaxed">
-                    Get instant calculations of total contributions and guest counts. Nevta Digital provides live updates so you stay organized during the rush.
+                    {t('feature2Desc')}
                   </p>
                 </CardContent>
               </Card>
@@ -111,9 +111,9 @@ export default function Home() {
                   <div className="p-4 bg-primary/20 w-fit rounded-2xl">
                     <CloudDownload className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold font-headline text-accent">Effortless Digital Exports</h3>
+                  <h3 className="text-2xl font-bold font-headline text-accent">{t('feature3Title')}</h3>
                   <p className="text-muted-foreground font-body leading-relaxed">
-                    Generate professional PDF and CSV reports in seconds. Use Nevta Digital to share records with family members or keep them for your archives.
+                    {t('feature3Desc')}
                   </p>
                 </CardContent>
               </Card>
@@ -125,14 +125,14 @@ export default function Home() {
           <div className="container px-4 md:px-6 mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
-                <h3 className="text-3xl md:text-5xl font-headline font-bold">Comprehensive Event Management with Nevta Digital</h3>
+                <h3 className="text-3xl md:text-5xl font-headline font-bold">{t('comprehensiveTitle')}</h3>
                 <ul className="space-y-4">
                   {[
-                    "Easy guest entry with location tracking",
-                    "Custom UPI QR code for digital payments",
-                    "Offline mode for remote celebrations",
-                    "Multi-language support (English & Hindi)",
-                    "Cloud sync across all your devices"
+                    t('compFeature1'),
+                    t('compFeature2'),
+                    t('compFeature3'),
+                    t('compFeature4'),
+                    t('compFeature5')
                   ].map((feature, i) => (
                     <li key={i} className="flex items-center gap-3 text-lg">
                       <CheckCircle2 className="w-6 h-6 text-primary" />
@@ -156,7 +156,7 @@ export default function Home() {
       <footer className="border-t py-12 bg-secondary/10">
         <div className="container flex flex-col items-center justify-between gap-6 md:flex-row px-4 mx-auto">
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="font-headline text-2xl font-bold text-accent">Nevta Digital</span>
+            <span className="font-headline text-2xl font-bold text-accent">{t('appName')}</span>
             <p className="text-sm text-muted-foreground font-body">
               © 2024 Nevta Digital. {t('footerRights')}
             </p>

@@ -1,11 +1,15 @@
 import { redirect } from 'next/navigation';
 
 /**
- * This page handles legacy or direct [id] paths by redirecting to the query-param based /event page.
- * We force dynamic rendering to ensure that Firebase App Hosting / Next.js standalone build
- * does not try to statically pre-render this route, which avoids build-time errors.
+ * This page handles dynamic [id] paths by redirecting to the query-param based /event page.
+ * We include generateStaticParams to satisfy Next.js static export/build requirements.
  */
 export const dynamic = 'force-dynamic';
+
+export function generateStaticParams() {
+  // Return a dummy entry to satisfy the build process for static routes
+  return [{ id: 'view' }];
+}
 
 export default function EventIdPage() {
   redirect('/event');
