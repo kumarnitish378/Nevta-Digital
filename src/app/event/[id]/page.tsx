@@ -278,7 +278,7 @@ export default function EventPage() {
                         suppressHydrationWarning
                       />
                       {showSuggestions && filteredSuggestions.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-48 overflow-auto border-primary/20">
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-[210px] overflow-y-auto border-primary/20">
                           {filteredSuggestions.map((suggestion) => (
                             <div
                               key={`suggestion-${suggestion}`}
