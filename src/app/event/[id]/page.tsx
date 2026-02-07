@@ -1,11 +1,18 @@
+import { redirect } from 'next/navigation';
+
+/**
+ * This page exists to satisfy Next.js static export requirements for the [id] dynamic segment.
+ * The application primarily uses query parameters (e.g., /event?id=...) for data fetching.
+ */
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  // Return an empty array to satisfy static export requirements
-  // as we use query parameters (/event?id=...) for actual data fetching.
-  return [];
+  // We provide a dummy parameter to ensure the static exporter succeeds.
+  return [{ id: 'view' }];
 }
 
 export default function EventIdPage() {
-  return null;
+  // Redirect any legacy [id] paths to the query-param based /event page.
+  redirect('/event');
 }
