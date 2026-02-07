@@ -1,6 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  // Standalone output is best for Firebase App Hosting
   output: 'standalone',
   trailingSlash: true,
   images: {

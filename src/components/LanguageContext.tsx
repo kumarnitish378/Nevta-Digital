@@ -12,7 +12,8 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('hi'); // Default to Hindi for Indian audience
+  // Defaulting to Hindi for the target audience
+  const [language, setLanguage] = useState<Language>('hi');
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('app-language') as Language;
@@ -24,6 +25,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('app-language', lang);
+    // Update the HTML lang attribute for accessibility and SEO
+    document.documentElement.lang = lang;
   };
 
   const t = (key: string) => {

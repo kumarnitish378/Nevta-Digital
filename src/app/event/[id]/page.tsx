@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 /**
  * This page handles dynamic [id] paths by redirecting to the query-param based /event page.
- * We include generateStaticParams to satisfy Next.js static export/build requirements.
+ * We include generateStaticParams and force-dynamic to satisfy all possible build environments (Static vs App Hosting).
  */
 export const dynamic = 'force-dynamic';
 
