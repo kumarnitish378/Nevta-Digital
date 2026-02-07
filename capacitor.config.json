@@ -1,0 +1,9 @@
+
+{
+  "appId": "com.nevtadigital.app",
+  "appName": "Nevta Digital",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  }
+}

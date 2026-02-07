@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -219,7 +220,7 @@ export default function Dashboard() {
               </CardContent>
               <CardFooter className="bg-white border-t p-4 flex gap-3">
                 <Button asChild className="flex-1 bg-primary font-bold h-11">
-                  <Link href={`/event/${occ.id}`}>
+                  <Link href={`/event?id=${occ.id}`}>
                     {t('manageRecords')} <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
