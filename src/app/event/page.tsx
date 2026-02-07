@@ -156,7 +156,7 @@ function EventContent() {
         <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="mr-4">
           <ArrowLeft className="w-5 h-5 mr-2" /> {t('back')}
         </Button>
-        <span className="font-headline text-xl font-bold text-accent truncate">{occasion?.name}</span>
+        <span className="font-headline text-xl font-bold text-accent truncate">{occasion?.name || t('manageRecords')}</span>
         <div className="ml-auto flex items-center gap-2">
           <LanguageToggle />
           <Button size="sm" onClick={() => window.print()} className="bg-primary">
