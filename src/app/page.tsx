@@ -64,10 +64,10 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full h-14 text-lg font-bold">
+                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full h-14 text-lg font-bold shadow-lg">
                   <Link href="/register">{t('getStarted')}</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8 rounded-full h-14 text-lg font-bold">
+                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8 rounded-full h-14 text-lg font-bold shadow-sm">
                   <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
                     <Smartphone className="w-5 h-5 mr-2" /> {t('downloadApp')}
                   </a>
