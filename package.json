@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "static-build": "next build && npx cap copy",
+    "static-build": "next build && npx cap sync android",
     "android:apk": "cd android && ./gradlew assembleDebug",
     "android:aab": "cd android && ./gradlew bundleRelease"
   },
