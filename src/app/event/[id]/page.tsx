@@ -40,9 +40,11 @@ export default function EventPage() {
   const [amount, setAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [reportGeneratedAt, setReportGeneratedAt] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Defer generating the report timestamp to prevent hydration mismatch
   useEffect(() => {
+    setIsMounted(true);
     setReportGeneratedAt(new Date().toLocaleString());
   }, []);
 
@@ -158,7 +160,7 @@ export default function EventPage() {
                 <CardDescription className="font-body text-sm">Recording in real-time</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <form onSubmit={handleAddEntry} className="space-y-4">
+                <form onSubmit={handleAddEntry} className="space-y-4" suppressHydrationWarning>
                   <div className="space-y-2">
                     <Label htmlFor="guestName" className="font-body font-bold flex items-center gap-2">
                       <User className="w-4 h-4 text-primary" /> Guest Name
@@ -170,6 +172,7 @@ export default function EventPage() {
                       onChange={e => setGuestName(e.target.value)} 
                       className="rounded-lg h-11" 
                       required 
+                      suppressHydrationWarning
                     />
                   </div>
                   <div className="space-y-2">
@@ -183,13 +186,14 @@ export default function EventPage() {
                       value={location} 
                       onChange={e => setLocation(e.target.value)} 
                       className="rounded-lg h-11" 
+                      suppressHydrationWarning
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
                       <IndianRupee className="w-4 h-4 text-primary" /> Amount (₹)
                     </Label>
-                    <Input id="amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="rounded-lg h-11 text-lg font-bold" required />
+                    <Input id="amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="rounded-lg h-11 text-lg font-bold" required suppressHydrationWarning />
                   </div>
                   <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md">
                     <Plus className="w-5 h-5 mr-2" /> Add Entry
@@ -212,6 +216,7 @@ export default function EventPage() {
                     className="pl-9 h-9 text-xs rounded-lg"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
+                    suppressHydrationWarning
                   />
                 </div>
               </CardHeader>
@@ -280,11 +285,13 @@ export default function EventPage() {
       </div>
       
       {/* Stable Datalist for Location Suggestions */}
-      <datalist id="registered-locations">
-        {uniqueLocations.map((loc) => (
-          <option key={`suggestion-${loc}`} value={loc} />
-        ))}
-      </datalist>
+      {isMounted && (
+        <datalist id="registered-locations">
+          {uniqueLocations.map((loc) => (
+            <option key={`suggestion-${loc}`} value={loc} />
+          ))}
+        </datalist>
+      )}
     </div>
   );
 }

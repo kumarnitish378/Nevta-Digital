@@ -95,7 +95,7 @@ export default function Dashboard() {
                 <Plus className="w-5 h-5 mr-2" /> New Occasion
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" suppressHydrationWarning>
               <DialogHeader>
                 <DialogTitle className="font-headline text-2xl text-accent">Create New Event</DialogTitle>
                 <DialogDescription className="font-body">
@@ -105,15 +105,15 @@ export default function Dashboard() {
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="title" className="font-body">Occasion Title</Label>
-                  <Input id="title" value={newOccasion.title} onChange={e => setNewOccasion({...newOccasion, title: e.target.value})} placeholder="e.g. Rahul Weds Priya" />
+                  <Input id="title" value={newOccasion.title} onChange={e => setNewOccasion({...newOccasion, title: e.target.value})} placeholder="e.g. Rahul Weds Priya" suppressHydrationWarning />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="organizer" className="font-body">Organizer Name</Label>
-                  <Input id="organizer" value={newOccasion.organizer} onChange={e => setNewOccasion({...newOccasion, organizer: e.target.value})} />
+                  <Input id="organizer" value={newOccasion.organizer} onChange={e => setNewOccasion({...newOccasion, organizer: e.target.value})} suppressHydrationWarning />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date" className="font-body">Event Date</Label>
-                  <Input id="date" type="date" value={newOccasion.date} onChange={e => setNewOccasion({...newOccasion, date: e.target.value})} />
+                  <Input id="date" type="date" value={newOccasion.date} onChange={e => setNewOccasion({...newOccasion, date: e.target.value})} suppressHydrationWarning />
                 </div>
               </div>
               <DialogFooter>
@@ -131,6 +131,7 @@ export default function Dashboard() {
             className="pl-10 h-12 rounded-xl bg-white border-muted shadow-sm focus:ring-primary"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            suppressHydrationWarning
           />
         </div>
 
