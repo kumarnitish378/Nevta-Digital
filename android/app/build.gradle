@@ -1,19 +1,19 @@
+
 apply plugin: 'com.android.application'
 
 android {
     namespace "com.nevtadigital.app"
-    compileSdk rootProject.ext.compileSdkVersion
+    compileSdk 34
     defaultConfig {
         applicationId "com.nevtadigital.app"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdk 22
+        targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Allows cases where firebase-services.json is missing during development
-             // if you are using manual initialization.
-             noCompress "json"
+             // Strings are not to be extracted from the web assets
+             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
     buildTypes {
@@ -25,27 +25,29 @@ android {
 }
 
 repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
+    google()
+    mavenCentral()
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.appcompat:appcompat:$project.androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$project.androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$project.coreSplashScreenVersion"
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation project(':capacitor-android')
-    implementation project(':capacitor-cordova-android-plugins')
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    // This is managed by Capacitor, added here for safety
+    try {
+        implementation project(':capacitor-cordova-android-plugins')
+    } catch (Exception e) {
+        // Ignored if no plugins are present
+    }
 }
 
-apply from: 'capacitor.build.gradle'
-
 try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, skipping Google Services plugin injection")
+    apply from: 'capacitor.build.gradle'
+} catch (Exception e) {
+    println("Warning: capacitor.build.gradle not found.")
 }

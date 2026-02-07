@@ -1,3 +1,4 @@
+
 pluginManagement {
     repositories {
         google()
@@ -12,6 +13,13 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = 'android'
+rootProject.name = "android"
 include ':app'
-apply from: 'capacitor.settings.gradle'
+
+// Capacitor auto-generated settings
+try {
+    apply from: 'capacitor.settings.gradle'
+} catch (Exception e) {
+    // Fallback if capacitor.settings.gradle is missing during first build
+    println("Warning: capacitor.settings.gradle not found. Run 'npx cap sync' to generate it.")
+}
