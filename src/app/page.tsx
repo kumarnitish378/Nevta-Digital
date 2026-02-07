@@ -1,10 +1,15 @@
+"use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { IndianRupee, Users, ShieldCheck, CloudDownload } from 'lucide-react';
+import { useLanguage } from '@/components/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function Home() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/50 backdrop-blur-sm sticky top-0 z-50">
@@ -12,14 +17,15 @@ export default function Home() {
           <div className="bg-primary p-1.5 rounded-lg">
             <IndianRupee className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-headline text-2xl font-bold text-accent">Nevta Digital</span>
+          <span className="font-headline text-2xl font-bold text-accent">{t('appName')}</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
+          <LanguageToggle />
           <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
-            Login
+            {t('login')}
           </Link>
           <Link href="/register" className="text-sm font-medium hover:text-primary transition-colors">
-            Register
+            {t('register')}
           </Link>
         </nav>
       </header>
@@ -31,18 +37,18 @@ export default function Home() {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-accent">
-                  Digitalize Your Wedding <br className="hidden md:block" /> Nevta Records
+                  {t('landingTitle')}
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl font-body">
-                  Ditch the paper notebooks. Record, manage, and preserve Sagoon contributions securely in real-time. Accessible anytime, anywhere.
+                  {t('landingSubtitle')}
                 </p>
               </div>
               <div className="space-x-4">
                 <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full">
-                  <Link href="/register">Get Started</Link>
+                  <Link href="/register">{t('getStarted')}</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8 rounded-full">
-                  <Link href="/login">Login</Link>
+                  <Link href="/login">{t('login')}</Link>
                 </Button>
               </div>
             </div>
@@ -57,9 +63,9 @@ export default function Home() {
                   <div className="p-3 bg-primary/10 w-fit rounded-xl">
                     <ShieldCheck className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold font-headline">Secure & Permanent</h3>
+                  <h3 className="text-xl font-bold font-headline">{t('securePermanent')}</h3>
                   <p className="text-muted-foreground font-body">
-                    Never lose your records due to physical damage. Encrypted cloud storage ensures your data is safe forever.
+                    {t('secureDesc')}
                   </p>
                 </CardContent>
               </Card>
@@ -68,9 +74,9 @@ export default function Home() {
                   <div className="p-3 bg-primary/10 w-fit rounded-xl">
                     <Users className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold font-headline">Real-time Insights</h3>
+                  <h3 className="text-xl font-bold font-headline">{t('realtimeInsights')}</h3>
                   <p className="text-muted-foreground font-body">
-                    Get instant totals of guests and amounts as you enter data. No more manual calculations at the end of the night.
+                    {t('realtimeDesc')}
                   </p>
                 </CardContent>
               </Card>
@@ -79,9 +85,9 @@ export default function Home() {
                   <div className="p-3 bg-primary/10 w-fit rounded-xl">
                     <CloudDownload className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold font-headline">Easy Exports</h3>
+                  <h3 className="text-xl font-bold font-headline">{t('easyExports')}</h3>
                   <p className="text-muted-foreground font-body">
-                    Export your reports to PDF or CSV in one click. Share them via WhatsApp or email with your family.
+                    {t('easyDesc')}
                   </p>
                 </CardContent>
               </Card>
@@ -93,11 +99,11 @@ export default function Home() {
       <footer className="border-t py-6 bg-secondary/10">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row px-4 mx-auto">
           <p className="text-sm text-muted-foreground font-body">
-            © 2024 Nevta Digital. All rights reserved. Made with ❤️ for Indian Traditions.
+            © 2024 {t('appName')}. {t('footerRights')}
           </p>
           <div className="flex gap-4">
-            <Link href="#" className="text-xs text-muted-foreground hover:underline">Privacy Policy</Link>
-            <Link href="#" className="text-xs text-muted-foreground hover:underline">Terms of Service</Link>
+            <Link href="#" className="text-xs text-muted-foreground hover:underline">{t('privacyPolicy')}</Link>
+            <Link href="#" className="text-xs text-muted-foreground hover:underline">{t('termsOfService')}</Link>
           </div>
         </div>
       </footer>

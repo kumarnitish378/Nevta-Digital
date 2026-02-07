@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -27,11 +26,14 @@ import {
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useLanguage } from '@/components/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function EventPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const { t } = useLanguage();
   const db = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -124,14 +126,13 @@ export default function EventPage() {
     setLocationInput("");
     setAmount("");
     setShowSuggestions(false);
-    toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
+    toast({ title: "Entry Saved", description: `₹${amount} for ${guestName}` });
   }, [db, user?.uid, id, guestName, locationInput, amount]);
 
   const handleDeleteEntry = (entryId: string) => {
     if (!db || !user?.uid || !id) return;
     const docRef = doc(db, 'users', user.uid, 'occasions', id as string, 'contributions', entryId);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Entry Deleted", description: "The record has been removed." });
   };
 
   const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,7 +140,7 @@ export default function EventPage() {
     if (!file || !user?.uid || !db) return;
 
     if (!file.type.startsWith('image/')) {
-      toast({ title: "Invalid File", description: "Please upload an image file.", variant: "destructive" });
+      toast({ title: "Invalid File", description: "Please upload an image.", variant: "destructive" });
       return;
     }
 
@@ -148,14 +149,14 @@ export default function EventPage() {
       const base64String = event.target?.result as string;
       const userDocRef = doc(db, 'users', user.uid);
       setDocumentNonBlocking(userDocRef, { upiQrCode: base64String }, { merge: true });
-      toast({ title: "QR Code Updated", description: "Your UPI QR code has been saved." });
+      toast({ title: "Updated", description: "UPI QR code saved." });
     };
     reader.readAsDataURL(file);
   };
 
   const exportCSV = () => {
     if (!entries) return;
-    const headers = ["Guest Name", "Location", "Amount", "Date"];
+    const headers = [t('tableGuest'), t('tableLocation'), t('tableAmount'), t('tableDate')];
     const rows = entries.map(e => [e.guestName, e.location, e.amount, e.contributionDate]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(r => r.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -180,8 +181,8 @@ export default function EventPage() {
   if (!occasion) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <h2 className="text-2xl font-headline font-bold mb-4 text-accent">Occasion not found</h2>
-        <Button asChild><Link href="/dashboard">Back to Dashboard</Link></Button>
+        <h2 className="text-2xl font-headline font-bold mb-4 text-accent">{t('noEventsFound')}</h2>
+        <Button asChild><Link href="/dashboard">{t('back')}</Link></Button>
       </div>
     );
   }
@@ -190,7 +191,7 @@ export default function EventPage() {
     <div className="min-h-screen bg-background">
       <header className="px-6 h-16 flex items-center border-b bg-white shadow-sm sticky top-0 z-50 print:hidden">
         <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="mr-4">
-          <ArrowLeft className="w-5 h-5 mr-2" /> Back
+          <ArrowLeft className="w-5 h-5 mr-2" /> {t('back')}
         </Button>
         <div className="flex items-center gap-2">
           <div className="bg-primary p-1 rounded-lg">
@@ -199,15 +200,16 @@ export default function EventPage() {
           <span className="font-headline text-xl font-bold text-accent truncate max-w-[150px] sm:max-w-md">{occasion.name}</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <LanguageToggle />
           <Badge variant="outline" className="font-body hidden md:flex border-primary text-primary bg-primary/5 px-3 py-1" suppressHydrationWarning>
             <Calendar className="w-3 h-3 mr-2" /> {occasion.eventDate}
           </Badge>
           <div className="h-4 w-px bg-muted mx-2 hidden sm:block"></div>
           <Button variant="outline" size="sm" onClick={exportCSV} className="text-accent border-accent hover:bg-accent hover:text-white hidden sm:flex">
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> {t('csvExport')}
           </Button>
           <Button size="sm" onClick={() => window.print()} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <FileText className="w-4 h-4 mr-2" /> PDF
+            <FileText className="w-4 h-4 mr-2" /> {t('pdfExport')}
           </Button>
         </div>
       </header>
@@ -216,13 +218,13 @@ export default function EventPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="shadow-sm border-muted overflow-hidden">
             <CardContent className="p-4 bg-primary/5">
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Guest Count</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">{t('guestCount')}</p>
               <h2 className="text-3xl font-headline font-bold text-accent">{guestCount}</h2>
             </CardContent>
           </Card>
           <Card className="shadow-sm border-muted overflow-hidden">
             <CardContent className="p-4 bg-accent/5">
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Total Collection</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">{t('totalCollection')}</p>
               <h2 className="text-3xl font-headline font-bold text-accent" suppressHydrationWarning>
                 ₹{totalAmount.toLocaleString()}
               </h2>
@@ -230,7 +232,7 @@ export default function EventPage() {
           </Card>
           <div className="hidden lg:block col-span-2">
              <div className="h-full flex items-center px-6 rounded-xl border-2 border-dashed border-muted text-muted-foreground font-body italic text-sm">
-                Organizer: {user?.displayName || 'Owner'} • Live Cloud Sync Active
+                {t('organizer')}: {user?.displayName || 'Owner'} • {t('liveCloudSync')}
              </div>
           </div>
         </div>
@@ -239,18 +241,18 @@ export default function EventPage() {
           <div className="lg:col-span-4 print:hidden space-y-6">
             <Card className="shadow-lg border-primary/20">
               <CardHeader className="bg-primary/10">
-                <CardTitle className="font-headline text-xl text-accent">New Sagoon Entry</CardTitle>
-                <CardDescription className="font-body text-sm">Enter guest details below</CardDescription>
+                <CardTitle className="font-headline text-xl text-accent">{t('newSagoonEntry')}</CardTitle>
+                <CardDescription className="font-body text-sm">{t('createEventDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddEntry} className="space-y-4" suppressHydrationWarning>
                   <div className="space-y-2">
                     <Label htmlFor="guestName" className="font-body font-bold flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" /> Guest Name
+                      <User className="w-4 h-4 text-primary" /> {t('guestName')}
                     </Label>
                     <Input 
                       id="guestName" 
-                      placeholder="e.g. Mukesh Jain" 
+                      placeholder={t('guestNamePlaceholder')} 
                       value={guestName} 
                       onChange={e => setGuestName(e.target.value)} 
                       className="rounded-lg h-11" 
@@ -260,12 +262,12 @@ export default function EventPage() {
                   </div>
                   <div className="space-y-2 relative">
                     <Label htmlFor="location-input" className="font-body font-bold flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary" /> Location / Place
+                      <MapPin className="w-4 h-4 text-primary" /> {t('location')}
                     </Label>
                     <div className="relative">
                       <Input 
                         id="location-input" 
-                        placeholder="e.g. Jodhpur" 
+                        placeholder={t('locationPlaceholder')} 
                         value={locationInput} 
                         onChange={e => {
                           setLocationInput(e.target.value);
@@ -297,12 +299,12 @@ export default function EventPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
-                      <IndianRupee className="w-4 h-4 text-primary" /> Amount (₹)
+                      <IndianRupee className="w-4 h-4 text-primary" /> {t('amount')}
                     </Label>
                     <Input id="amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="rounded-lg h-11 text-lg font-bold" required suppressHydrationWarning />
                   </div>
                   <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md">
-                    <Plus className="w-5 h-5 mr-2" /> Add Record
+                    <Plus className="w-5 h-5 mr-2" /> {t('addRecord')}
                   </Button>
                 </form>
               </CardContent>
@@ -312,13 +314,13 @@ export default function EventPage() {
               <CardHeader className="bg-accent/5 pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle className="font-headline text-lg text-accent flex items-center gap-2">
-                    <QrCode className="w-5 h-5" /> Receive UPI Payment
+                    <QrCode className="w-5 h-5" /> {t('receiveUpiTitle')}
                   </CardTitle>
                   <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-8 w-8 text-primary">
                     <Upload className="w-4 h-4" />
                   </Button>
                 </div>
-                <CardDescription className="text-xs">Show this QR to guests for digital sagoon</CardDescription>
+                <CardDescription className="text-xs">{t('upiDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center pt-4">
                 <div className="relative w-48 h-48 border-4 border-accent/10 rounded-2xl overflow-hidden bg-white shadow-inner p-2">
@@ -338,7 +340,7 @@ export default function EventPage() {
                   accept="image/*" 
                 />
                 <p className="mt-3 text-[10px] text-muted-foreground text-center font-body">
-                  {userData?.upiQrCode ? "Personal QR Active" : "Showing Demo QR - Click upload to change"}
+                  {userData?.upiQrCode ? t('qrActive') : t('qrDemo')}
                 </p>
               </CardContent>
             </Card>
@@ -347,11 +349,11 @@ export default function EventPage() {
           <div className="lg:col-span-8">
             <Card className="shadow-sm border-muted print:border-none print:shadow-none">
               <CardHeader className="flex flex-row items-center justify-between print:hidden">
-                <CardTitle className="font-headline text-xl text-accent">Recent Entries</CardTitle>
+                <CardTitle className="font-headline text-xl text-accent">{t('recentEntries')}</CardTitle>
                 <div className="relative w-1/2 max-w-[200px]">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input 
-                    placeholder="Search name..." 
+                    placeholder={t('search')} 
                     className="pl-9 h-9 text-xs rounded-lg"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -363,10 +365,10 @@ export default function EventPage() {
                 <Table>
                   <TableHeader className="bg-secondary/20">
                     <TableRow>
-                      <TableHead className="font-bold text-accent font-headline">Guest Name</TableHead>
-                      <TableHead className="font-bold text-accent font-headline">Location</TableHead>
-                      <TableHead className="font-bold text-accent font-headline text-right">Amount</TableHead>
-                      <TableHead className="font-bold text-accent font-headline text-right print:table-cell hidden sm:table-cell">Date</TableHead>
+                      <TableHead className="font-bold text-accent font-headline">{t('tableGuest')}</TableHead>
+                      <TableHead className="font-bold text-accent font-headline">{t('tableLocation')}</TableHead>
+                      <TableHead className="font-bold text-accent font-headline text-right">{t('tableAmount')}</TableHead>
+                      <TableHead className="font-bold text-accent font-headline text-right print:table-cell hidden sm:table-cell">{t('tableDate')}</TableHead>
                       <TableHead className="print:hidden w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -390,15 +392,15 @@ export default function EventPage() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Record?</AlertDialogTitle>
+                                  <AlertDialogTitle>{t('delete')}?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This will permanently remove the entry for <strong>{entry.guestName}</strong> (₹{entry.amount}).
+                                    {entry.guestName} (₹{entry.amount})
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => handleDeleteEntry(entry.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                    Delete Record
+                                    {t('delete')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -408,7 +410,7 @@ export default function EventPage() {
                     )) : (
                       <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center font-body text-muted-foreground">
-                          No records found.
+                          {t('noEventsFound')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -419,8 +421,8 @@ export default function EventPage() {
             
             <div className="hidden print:block mt-12 pt-8 border-t border-dotted border-gray-400">
                <div className="grid grid-cols-2 text-xs text-gray-500 font-body">
-                  <div>Report Generated by: <b>Nevta Digital</b></div>
-                  <div className="text-right" suppressHydrationWarning>Date: {reportGeneratedAt || '...'}</div>
+                  <div>{t('reportGeneratedBy')}: <b>{t('appName')}</b></div>
+                  <div className="text-right" suppressHydrationWarning>{reportGeneratedAt || '...'}</div>
                </div>
             </div>
           </div>

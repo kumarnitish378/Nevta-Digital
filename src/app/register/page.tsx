@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,12 +12,15 @@ import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking, use
 import { updateProfile } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
+import { useLanguage } from '@/components/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function RegisterPage() {
   const router = useRouter();
   const auth = useAuth();
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -29,7 +31,6 @@ export default function RegisterPage() {
     setIsMounted(true);
   }, []);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (isMounted && !isUserLoading && user) {
       router.push('/dashboard');
@@ -40,12 +41,12 @@ export default function RegisterPage() {
     e.preventDefault();
     
     if (mobile.length < 10) {
-      toast({ title: "Invalid Mobile", description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
+      toast({ title: t('mobile'), description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
       return;
     }
 
     if (password.length < 6) {
-      toast({ title: "Weak Password", description: "Password should be at least 6 characters.", variant: "destructive" });
+      toast({ title: t('password'), description: "Password should be at least 6 characters.", variant: "destructive" });
       return;
     }
 
@@ -54,11 +55,8 @@ export default function RegisterPage() {
     
     try {
       const credential = await initiateEmailSignUp(auth, dummyEmail, password);
-      
-      // Update profile display name
       await updateProfile(credential.user, { displayName: name });
       
-      // Setup user document
       const userDocRef = doc(db, 'users', credential.user.uid);
       setDocumentNonBlocking(userDocRef, {
         id: credential.user.uid,
@@ -67,17 +65,10 @@ export default function RegisterPage() {
         createdAt: new Date().toISOString()
       }, { merge: true });
 
-      toast({ title: "Registration Successful", description: `Welcome, ${name}! Starting your journey.` });
-      // Redirect is handled by the useEffect
+      toast({ title: "Success", description: `Welcome, ${name}!` });
     } catch (err: any) {
       setIsLoading(false);
-      let message = err.message;
-      if (err.code === 'auth/email-already-in-use') {
-        message = "An account with this mobile number already exists.";
-      } else if (err.code === 'auth/invalid-email') {
-        message = "Registration failed. Please try a different mobile number.";
-      }
-      toast({ title: "Registration Failed", description: message, variant: "destructive" });
+      toast({ title: t('register'), description: err.message, variant: "destructive" });
     }
   };
 
@@ -85,6 +76,9 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -92,15 +86,15 @@ export default function RegisterPage() {
               <IndianRupee className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline font-bold text-accent">Create Account</CardTitle>
+          <CardTitle className="text-3xl font-headline font-bold text-accent">{t('register')}</CardTitle>
           <CardDescription className="font-body text-base">
-            Join Nevta Digital with your mobile number
+            {t('joinNevta') || "Join Nevta Digital with your mobile number"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
             <div className="space-y-2">
-              <Label htmlFor="name" className="font-body">Full Name</Label>
+              <Label htmlFor="name" className="font-body">{t('fullName')}</Label>
               <Input 
                 id="name" 
                 placeholder="Enter your name" 
@@ -112,7 +106,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
+              <Label htmlFor="mobile" className="font-body">{t('mobile')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
@@ -129,7 +123,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Create Password</Label>
+              <Label htmlFor="password">{t('createPasswordLabel') || "Create Password"}</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -144,21 +138,21 @@ export default function RegisterPage() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Creating Account...</span>
+                  <span>{t('creatingAccount')}</span>
                 </div>
-              ) : "Register Now"}
+              ) : t('registerNow') || "Register Now"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center font-body text-muted-foreground">
-            Already have an account?{" "}
+            {t('alreadyHaveAccount')}{" "}
             <Link href="/login" className="text-primary hover:underline font-bold">
-              Login here
+              {t('loginHere')}
             </Link>
           </div>
           <Link href="/" className="text-xs text-center text-muted-foreground hover:text-primary transition-colors">
-            ← Back to Home
+            ← {t('backToHome')}
           </Link>
         </CardFooter>
       </Card>

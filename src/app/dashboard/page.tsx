@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -25,8 +24,11 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBl
 import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
+import { useLanguage } from '@/components/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 function OccasionStats({ userId, occasionId }: { userId: string; occasionId: string }) {
+  const { t } = useLanguage();
   const db = useFirestore();
   const contributionsRef = useMemoFirebase(() => {
     if (!db || !userId || !occasionId) return null;
@@ -46,14 +48,14 @@ function OccasionStats({ userId, occasionId }: { userId: string; occasionId: str
   return (
     <div className="grid grid-cols-2 gap-4 mt-4">
       <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
-        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Entries</p>
+        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{t('entries')}</p>
         <div className="flex items-center gap-1.5">
           <Users className="w-3.5 h-3.5 text-primary" />
           <span className="font-bold text-accent">{stats.count}</span>
         </div>
       </div>
       <div className="p-3 bg-accent/5 rounded-lg border border-accent/10">
-        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total</p>
+        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{t('total')}</p>
         <div className="flex items-center gap-1.5" suppressHydrationWarning>
           <IndianRupee className="w-3.5 h-3.5 text-accent" />
           <span className="font-bold text-accent">₹{stats.total.toLocaleString()}</span>
@@ -67,6 +69,7 @@ export default function Dashboard() {
   const router = useRouter();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const { t } = useLanguage();
   const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState("");
   const [newOccasion, setNewOccasion] = useState({ name: "", eventDate: "" });
@@ -123,7 +126,7 @@ export default function Dashboard() {
       ownerId: user.uid,
       createdAt: new Date().toISOString()
     }).then(() => {
-      toast({ title: "Event Created", description: `${newOccasion.name} has been added.` });
+      toast({ title: "Success", description: `${newOccasion.name} added.` });
       setIsDialogOpen(false);
       setIsCreating(false);
       setNewOccasion({ name: "", eventDate: new Date().toISOString().split('T')[0] });
@@ -136,16 +139,15 @@ export default function Dashboard() {
     if (!db || !user?.uid) return;
     const docRef = doc(db, 'users', user.uid, 'occasions', id);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Event Deleted", description: "The occasion has been removed." });
+    toast({ title: "Deleted", description: "Event removed." });
   };
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      toast({ title: "Logged Out", description: "Successfully signed out." });
       router.push('/login');
     } catch (error) {
-      toast({ title: "Error", description: "Failed to logout. Please try again.", variant: "destructive" });
+      toast({ title: "Error", description: "Logout failed.", variant: "destructive" });
     }
   };
 
@@ -164,15 +166,16 @@ export default function Dashboard() {
           <div className="bg-primary p-1.5 rounded-lg">
             <IndianRupee className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-headline text-2xl font-bold text-accent">Nevta Digital</span>
+          <span className="font-headline text-2xl font-bold text-accent">{t('appName')}</span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
+          <LanguageToggle />
           <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4 hidden sm:flex">
              <User className="w-4 h-4 text-primary" />
-             <span className="font-body font-bold">{user?.displayName || 'User'}</span>
+             <span className="font-body font-bold">{user?.displayName || t('welcomeGuest')}</span>
           </div>
           <Button onClick={handleLogout} variant="ghost" size="sm" className="font-bold text-red-600 hover:bg-red-50">
-            Logout
+            {t('logout')}
           </Button>
         </div>
       </header>
@@ -180,36 +183,36 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-headline font-bold text-accent">Your Occasions</h1>
-            <p className="text-muted-foreground font-body">Manage your sagoon collection records</p>
+            <h1 className="text-3xl font-headline font-bold text-accent">{t('yourOccasions')}</h1>
+            <p className="text-muted-foreground font-body">{t('manageRecords')}</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 font-bold shadow-lg h-12">
-                <Plus className="w-5 h-5 mr-2" /> New Occasion
+                <Plus className="w-5 h-5 mr-2" /> {t('newOccasion')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]" suppressHydrationWarning>
               <DialogHeader>
-                <DialogTitle className="font-headline text-2xl text-accent">Create New Event</DialogTitle>
+                <DialogTitle className="font-headline text-2xl text-accent">{t('createEventTitle')}</DialogTitle>
                 <DialogDescription className="font-body">
-                  Enter details for the new wedding or event record.
+                  {t('createEventDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="font-body">Occasion Title</Label>
+                  <Label htmlFor="title" className="font-body">{t('appName')}</Label>
                   <Input 
                     id="title" 
                     value={newOccasion.name} 
                     onChange={e => setNewOccasion({...newOccasion, name: e.target.value})} 
-                    placeholder="e.g. Rahul Weds Priya" 
+                    placeholder={t('occasionTitlePlaceholder')} 
                     suppressHydrationWarning 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="font-body">Event Date</Label>
+                  <Label htmlFor="date" className="font-body">{t('eventDate')}</Label>
                   <Input 
                     id="date" 
                     type="date" 
@@ -220,9 +223,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>{t('cancel')}</Button>
                 <Button onClick={handleCreateOccasion} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={isCreating}>
-                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Start Recording"}
+                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : t('startRecording')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -232,7 +235,7 @@ export default function Dashboard() {
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input 
-            placeholder="Search events by name..." 
+            placeholder={t('searchEventsPlaceholder')} 
             className="pl-12 h-14 rounded-2xl bg-white border-muted shadow-sm focus:ring-primary text-lg"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -259,7 +262,7 @@ export default function Dashboard() {
               <CardFooter className="bg-white border-t p-4 flex gap-3">
                 <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11">
                   <Link href={`/event/${occ.id}`}>
-                    Manage Records <ArrowRight className="w-4 h-4 ml-2" />
+                    {t('manageRecords')} <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
                 
@@ -271,15 +274,15 @@ export default function Dashboard() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Occasion?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('deletingEventTitle')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete "<strong>{occ.name}</strong>" and all its associated Nevta records. This action cannot be undone.
+                        {t('deletingEventDesc')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                       <AlertDialogAction onClick={() => handleDeleteOccasion(occ.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Delete Event
+                        {t('delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -289,8 +292,8 @@ export default function Dashboard() {
           )) : (
             <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-muted">
               <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-              <h3 className="text-2xl font-headline font-bold text-muted-foreground">No events found</h3>
-              <p className="text-muted-foreground font-body text-lg">Create a new occasion to start recording sagoon</p>
+              <h3 className="text-2xl font-headline font-bold text-muted-foreground">{t('noEventsFound')}</h3>
+              <p className="text-muted-foreground font-body text-lg">{t('createFirstEvent')}</p>
             </div>
           )}
         </div>
