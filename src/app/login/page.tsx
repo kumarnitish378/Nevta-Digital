@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +34,11 @@ export default function LoginPage() {
 
     setIsLoading(true);
     
-    // Internal mapping of mobile to dummy email for Firebase Auth
     const dummyEmail = `${mobile}@nevta.digital`;
     
     try {
       initiateEmailSignIn(auth, dummyEmail, password);
       
-      // We check for auth state change or use a timeout to handle redirection
       const checkAuthInterval = setInterval(() => {
         if (auth.currentUser) {
           clearInterval(checkAuthInterval);
@@ -54,6 +57,8 @@ export default function LoginPage() {
     }
   };
 
+  if (!isMounted) return null;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
@@ -69,7 +74,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
             <div className="space-y-2">
               <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
               <div className="relative">
@@ -83,6 +88,7 @@ export default function LoginPage() {
                   className="rounded-lg h-12 pl-10"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -95,6 +101,7 @@ export default function LoginPage() {
                 className="rounded-lg h-12"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                suppressHydrationWarning
               />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md" disabled={isLoading}>
