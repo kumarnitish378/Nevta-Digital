@@ -39,10 +39,19 @@ export default function EventPage() {
   const [reportGeneratedAt, setReportGeneratedAt] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Authentication Guard
   useEffect(() => {
     setIsMounted(true);
-    setReportGeneratedAt(new Date().toLocaleString());
-  }, []);
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (isMounted) {
+      setReportGeneratedAt(new Date().toLocaleString());
+    }
+  }, [isMounted]);
 
   // Fetch Occasion Details
   const occasionRef = useMemoFirebase(() => {
@@ -121,7 +130,7 @@ export default function EventPage() {
     window.print();
   };
 
-  if (isUserLoading || isOccasionLoading || isEntriesLoading) {
+  if (isUserLoading || isOccasionLoading || isEntriesLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -176,7 +185,7 @@ export default function EventPage() {
             <CardContent className="p-4 bg-accent/5">
               <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">Total Collection</p>
               <h2 className="text-3xl font-headline font-bold text-accent" suppressHydrationWarning>
-                ₹{isMounted ? totalAmount.toLocaleString() : totalAmount}
+                ₹{totalAmount.toLocaleString()}
               </h2>
             </CardContent>
           </Card>
@@ -272,7 +281,7 @@ export default function EventPage() {
                         <TableCell className="font-bold font-body">{entry.guestName}</TableCell>
                         <TableCell className="text-muted-foreground font-body">{entry.location || '-'}</TableCell>
                         <TableCell className="text-right font-headline font-bold text-accent text-lg" suppressHydrationWarning>
-                          ₹{isMounted ? entry.amount.toLocaleString() : entry.amount}
+                          ₹{entry.amount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell" suppressHydrationWarning>
                           {entry.contributionDate ? new Date(entry.contributionDate).toLocaleDateString() : '-'}
@@ -323,13 +332,11 @@ export default function EventPage() {
         </div>
       </div>
       
-      {isMounted && (
-        <datalist id="registered-locations">
-          {uniqueLocations.map((loc) => (
-            <option key={`suggestion-${loc}`} value={loc} />
-          ))}
-        </datalist>
-      )}
+      <datalist id="registered-locations">
+        {uniqueLocations.map((loc) => (
+          <option key={`suggestion-${loc}`} value={loc} />
+        ))}
+      </datalist>
     </div>
   );
 }

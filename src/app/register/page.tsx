@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { IndianRupee, Loader2 } from 'lucide-react';
-import { useAuth, initiateEmailSignUp } from '@/firebase';
+import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 
 export default function RegisterPage() {
   const router = useRouter();
   const auth = useAuth();
+  const db = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,13 +28,33 @@ export default function RegisterPage() {
     
     try {
       initiateEmailSignUp(auth, email, password);
-      // We'll wait a moment for the user to be created then try to update profile
-      setTimeout(async () => {
+      // Wait for the auth state to catch up
+      const checkAuthInterval = setInterval(async () => {
         if (auth.currentUser) {
+          clearInterval(checkAuthInterval);
+          
+          // 1. Update Profile Display Name
           await updateProfile(auth.currentUser, { displayName: name });
+          
+          // 2. Create User Document in Firestore to satisfy security rules
+          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          setDocumentNonBlocking(userDocRef, {
+            id: auth.currentUser.uid,
+            name: name,
+            email: email,
+            createdAt: new Date().toISOString()
+          }, { merge: true });
+
+          router.push('/dashboard');
         }
-        router.push('/dashboard');
-      }, 2000);
+      }, 500);
+
+      // Timeout after 10 seconds if it fails
+      setTimeout(() => {
+        clearInterval(checkAuthInterval);
+        setIsLoading(false);
+      }, 10000);
+
     } catch (err) {
       console.error(err);
       setIsLoading(false);

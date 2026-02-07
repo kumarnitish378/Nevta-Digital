@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight, Loader2 } from 'lucide-react';
@@ -22,22 +23,34 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState("");
   const [newOccasion, setNewOccasion] = useState({ name: "", eventDate: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Authentication Guard
   useEffect(() => {
     setIsMounted(true);
-    setNewOccasion(prev => ({
-      ...prev,
-      eventDate: new Date().toISOString().split('T')[0]
-    }));
-  }, []);
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (isMounted) {
+      setNewOccasion(prev => ({
+        ...prev,
+        eventDate: new Date().toISOString().split('T')[0]
+      }));
+    }
+  }, [isMounted]);
 
   const occasionsRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -51,26 +64,39 @@ export default function Dashboard() {
   );
 
   const handleCreateOccasion = () => {
-    if (!db || !user || !newOccasion.name) return;
+    if (!db || !user) return;
     
+    if (!newOccasion.name.trim()) {
+      toast({ title: "Validation Error", description: "Event name is required.", variant: "destructive" });
+      return;
+    }
+
+    setIsCreating(true);
     const colRef = collection(db, 'users', user.uid, 'occasions');
+    
     addDocumentNonBlocking(colRef, {
-      ...newOccasion,
+      name: newOccasion.name,
+      eventDate: newOccasion.eventDate,
       ownerId: user.uid,
       createdAt: new Date().toISOString()
+    }).then(() => {
+      toast({ title: "Event Created", description: `${newOccasion.name} has been added to your dashboard.` });
+      setIsDialogOpen(false);
+      setIsCreating(false);
+      setNewOccasion({ name: "", eventDate: new Date().toISOString().split('T')[0] });
+    }).catch(() => {
+      setIsCreating(false);
     });
-    
-    setIsDialogOpen(false);
-    setNewOccasion({ name: "", eventDate: new Date().toISOString().split('T')[0] });
   };
 
   const handleDeleteOccasion = (id: string) => {
     if (!db || !user) return;
     const docRef = doc(db, 'users', user.uid, 'occasions', id);
     deleteDocumentNonBlocking(docRef);
+    toast({ title: "Event Deleted", description: "The occasion and its records have been removed." });
   };
 
-  if (isUserLoading || isOccasionsLoading) {
+  if (isUserLoading || isOccasionsLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -130,7 +156,10 @@ export default function Dashboard() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateOccasion} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">Start Recording</Button>
+                <Button onClick={handleCreateOccasion} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={isCreating}>
+                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Start Recording
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
