@@ -18,6 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useAuth } from '@/firebase';
 import { collection, doc, query, orderBy } from 'firebase/firestore';
@@ -55,7 +56,7 @@ function OccasionStats({ userId, occasionId }: { userId: string; occasionId: str
       </div>
       <div className="p-3 bg-accent/5 rounded-lg border border-accent/10">
         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{t('total')}</p>
-        <div className="flex items-center gap-1.5" suppressHydrationWarning>
+        <div className="flex items-center gap-1.5">
           <IndianRupee className="w-3.5 h-3.5 text-accent" />
           <span className="font-bold text-accent">₹{stats.total.toLocaleString()}</span>
         </div>
