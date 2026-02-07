@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,11 +10,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { IndianRupee, Loader2, Phone } from 'lucide-react';
 import { useAuth, initiateEmailSignIn, useUser } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
+import { useLanguage } from '@/components/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +27,6 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (isMounted && !isUserLoading && user) {
       router.push('/dashboard');
@@ -36,7 +37,7 @@ export default function LoginPage() {
     e.preventDefault();
     
     if (mobile.length < 10) {
-      toast({ title: "Invalid Mobile", description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
+      toast({ title: t('mobile'), description: "Please enter a valid 10-digit mobile number.", variant: "destructive" });
       return;
     }
 
@@ -45,19 +46,14 @@ export default function LoginPage() {
     
     try {
       await initiateEmailSignIn(auth, dummyEmail, password);
-      toast({ title: "Success", description: "Welcome back! Accessing your dashboard." });
-      // Redirect is handled by the useEffect
+      toast({ title: "Success", description: t('welcome') });
     } catch (err: any) {
       setIsLoading(false);
       let message = "Please check your mobile number and password.";
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
         message = "Invalid mobile number or password.";
-      } else if (err.code === 'auth/user-not-found') {
-        message = "No account found with this mobile number.";
-      } else if (err.code === 'auth/invalid-email') {
-        message = "Account lookup failed. Please try again.";
       }
-      toast({ title: "Login Failed", description: message, variant: "destructive" });
+      toast({ title: t('login'), description: message, variant: "destructive" });
     }
   };
 
@@ -65,6 +61,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -72,15 +71,15 @@ export default function LoginPage() {
               <IndianRupee className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline font-bold text-accent">Welcome Back</CardTitle>
+          <CardTitle className="text-3xl font-headline font-bold text-accent">{t('welcome')}</CardTitle>
           <CardDescription className="font-body text-base">
-            Login with your mobile number
+            {t('loginWithMobile') || "Login with your mobile number"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
             <div className="space-y-2">
-              <Label htmlFor="mobile" className="font-body">Mobile Number</Label>
+              <Label htmlFor="mobile" className="font-body">{t('mobile')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
@@ -97,7 +96,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -112,21 +111,21 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>{t('authenticating')}</span>
                 </div>
-              ) : "Login Now"}
+              ) : t('loginNow') || "Login Now"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center font-body text-muted-foreground">
-            Don't have an account?{" "}
+            {t('dontHaveAccount')}{" "}
             <Link href="/register" className="text-primary hover:underline font-bold">
-              Register here
+              {t('registerHere')}
             </Link>
           </div>
           <Link href="/" className="text-xs text-center text-muted-foreground hover:text-primary transition-colors">
-            ← Back to Home
+            ← {t('backToHome')}
           </Link>
         </CardFooter>
       </Card>
