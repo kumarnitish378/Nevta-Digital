@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { IndianRupee, Loader2, Phone } from 'lucide-react';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { useAuth, initiateEmailSignIn, useUser } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +24,13 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isMounted && !isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router, isMounted]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +44,15 @@ export default function LoginPage() {
     
     const dummyEmail = `${mobile}@nevta.digital`;
     
-    // We don't 'await' here to maintain the non-blocking pattern, but we MUST catch the error.
     initiateEmailSignIn(auth, dummyEmail, password)
       .then(() => {
-        // Success handled by Auth state listener in Provider
+        toast({ title: "Success", description: "Logging you in..." });
         router.push('/dashboard');
       })
       .catch((err: any) => {
         setIsLoading(false);
         let message = "Please check your mobile number and password.";
-        if (err.code === 'auth/invalid-credential') {
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
           message = "Invalid mobile number or password.";
         } else if (err.code === 'auth/user-not-found') {
           message = "No account found with this mobile number.";

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { IndianRupee, Loader2, Phone } from 'lucide-react';
-import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking, useUser } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
@@ -17,6 +18,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const auth = useAuth();
   const db = useFirestore();
+  const { user, isUserLoading } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -26,6 +28,13 @@ export default function RegisterPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isMounted && !isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router, isMounted]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +66,7 @@ export default function RegisterPage() {
           createdAt: new Date().toISOString()
         }, { merge: true });
 
+        toast({ title: "Registration Successful", description: "Welcome to Nevta Digital!" });
         router.push('/dashboard');
       })
       .catch((err: any) => {
