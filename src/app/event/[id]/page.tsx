@@ -1,15 +1,16 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet, Loader2, QrCode, Upload } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,14 +24,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function EventPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [guestName, setGuestName] = useState("");
   const [locationInput, setLocationInput] = useState("");
@@ -54,6 +57,13 @@ export default function EventPage() {
       setReportGeneratedAt(new Date().toLocaleString());
     }
   }, [isMounted]);
+
+  const userRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userRef);
 
   const occasionRef = useMemoFirebase(() => {
     if (!db || !user || !id) return null;
@@ -114,6 +124,25 @@ export default function EventPage() {
     toast({ title: "Entry Deleted", description: "The record has been removed." });
   };
 
+  const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !db) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid File", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target?.result as string;
+      const userDocRef = doc(db, 'users', user.uid);
+      setDocumentNonBlocking(userDocRef, { upiQrCode: base64String }, { merge: true });
+      toast({ title: "QR Code Updated", description: "Your UPI QR code has been saved." });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const exportCSV = () => {
     if (!entries) return;
     const headers = ["Guest Name", "Location", "Amount", "Date"];
@@ -127,6 +156,8 @@ export default function EventPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const demoQr = PlaceHolderImages.find(img => img.id === 'demo-qr');
 
   if (isUserLoading || isOccasionLoading || isEntriesLoading || !isMounted) {
     return (
@@ -195,8 +226,8 @@ export default function EventPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-4 print:hidden">
-            <Card className="shadow-lg border-primary/20 sticky top-24">
+          <div className="lg:col-span-4 print:hidden space-y-6">
+            <Card className="shadow-lg border-primary/20">
               <CardHeader className="bg-primary/10">
                 <CardTitle className="font-headline text-xl text-accent">New Sagoon Entry</CardTitle>
                 <CardDescription className="font-body text-sm">Enter guest details below</CardDescription>
@@ -242,6 +273,41 @@ export default function EventPage() {
                     <Plus className="w-5 h-5 mr-2" /> Add Record
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-accent/20">
+              <CardHeader className="bg-accent/5 pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="font-headline text-lg text-accent flex items-center gap-2">
+                    <QrCode className="w-5 h-5" /> Receive UPI Payment
+                  </CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-8 w-8 text-primary">
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                </div>
+                <CardDescription className="text-xs">Show this QR to guests for digital sagoon</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center pt-4">
+                <div className="relative w-48 h-48 border-4 border-accent/10 rounded-2xl overflow-hidden bg-white shadow-inner p-2">
+                  <Image 
+                    src={userData?.upiQrCode || demoQr?.imageUrl || ""} 
+                    alt="UPI QR Code" 
+                    fill 
+                    className="object-contain p-2"
+                    data-ai-hint="qr code"
+                  />
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleQrUpload} 
+                  className="hidden" 
+                  accept="image/*" 
+                />
+                <p className="mt-3 text-[10px] text-muted-foreground text-center font-body">
+                  {userData?.upiQrCode ? "Personal QR Active" : "Showing Demo QR - Click upload to change"}
+                </p>
               </CardContent>
             </Card>
           </div>

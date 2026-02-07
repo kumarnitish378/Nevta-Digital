@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -17,6 +18,10 @@
         "mobileNumber": {
           "type": "string",
           "description": "Mobile number of the user, used for login."
+        },
+        "upiQrCode": {
+          "type": "string",
+          "description": "Base64 encoded UPI QR code image provided by the user."
         }
       },
       "required": [
