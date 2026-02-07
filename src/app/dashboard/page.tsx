@@ -38,7 +38,7 @@ function OccasionStats({ userId, occasionId }: { userId: string; occasionId: str
     if (!entries) return { count: 0, total: 0 };
     return entries.reduce((acc, curr) => ({
       count: acc.count + 1,
-      total: acc.total + (curr.amount || 0)
+      total: acc.total + (Number(curr.amount) || 0)
     }), { count: 0, total: 0 });
   }, [entries]);
 
@@ -53,7 +53,7 @@ function OccasionStats({ userId, occasionId }: { userId: string; occasionId: str
       </div>
       <div className="p-3 bg-accent/5 rounded-lg border border-accent/10">
         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total</p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" suppressHydrationWarning>
           <IndianRupee className="w-3.5 h-3.5 text-accent" />
           <span className="font-bold text-accent">₹{stats.total.toLocaleString()}</span>
         </div>
@@ -74,10 +74,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsMounted(true);
-    if (!isUserLoading && !user) {
+  }, []);
+
+  useEffect(() => {
+    if (!isUserLoading && !user && isMounted) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, isMounted]);
 
   useEffect(() => {
     if (isMounted && !newOccasion.eventDate) {
@@ -134,6 +137,10 @@ export default function Dashboard() {
     toast({ title: "Event Deleted", description: "The occasion has been removed." });
   };
 
+  const handleLogout = () => {
+     router.push('/login');
+  };
+
   if (isUserLoading || isOccasionsLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -156,8 +163,8 @@ export default function Dashboard() {
              <User className="w-4 h-4 text-primary" />
              <span className="font-body font-bold">{user?.displayName || 'User'}</span>
           </div>
-          <Button asChild variant="ghost" size="sm" className="font-bold text-red-600 hover:bg-red-50">
-            <Link href="/login">Logout</Link>
+          <Button onClick={handleLogout} variant="ghost" size="sm" className="font-bold text-red-600 hover:bg-red-50">
+            Logout
           </Button>
         </div>
       </header>

@@ -33,7 +33,7 @@ export default function EventPage() {
   const db = useFirestore();
   
   const [guestName, setGuestName] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationInput, setLocationInput] = useState("");
   const [amount, setAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMounted, setIsMounted] = useState(false);
@@ -41,10 +41,13 @@ export default function EventPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    if (!isUserLoading && !user) {
+  }, []);
+
+  useEffect(() => {
+    if (!isUserLoading && !user && isMounted) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, isMounted]);
 
   useEffect(() => {
     if (isMounted) {
@@ -66,7 +69,7 @@ export default function EventPage() {
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection(contributionsRef);
 
-  const totalAmount = useMemo(() => (entries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0), [entries]);
+  const totalAmount = useMemo(() => (entries || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0), [entries]);
   const guestCount = entries?.length || 0;
 
   const uniqueLocations = useMemo(() => {
@@ -92,17 +95,17 @@ export default function EventPage() {
     const colRef = collection(db, 'users', user.uid, 'occasions', id as string, 'contributions');
     addDocumentNonBlocking(colRef, {
       guestName,
-      location,
+      location: locationInput,
       amount: parseFloat(amount),
       contributionDate: new Date().toISOString(),
       occasionId: id
     });
 
     setGuestName("");
-    setLocation("");
+    setLocationInput("");
     setAmount("");
     toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
-  }, [db, user, id, guestName, location, amount]);
+  }, [db, user, id, guestName, locationInput, amount]);
 
   const handleDeleteEntry = (entryId: string) => {
     if (!db || !user || !id) return;
@@ -222,8 +225,8 @@ export default function EventPage() {
                       id="location-input" 
                       list="registered-locations"
                       placeholder="e.g. Jodhpur" 
-                      value={location} 
-                      onChange={e => setLocation(e.target.value)} 
+                      value={locationInput} 
+                      onChange={e => setLocationInput(e.target.value)} 
                       className="rounded-lg h-11" 
                       suppressHydrationWarning
                       autoComplete="off"
@@ -250,7 +253,7 @@ export default function EventPage() {
                 <div className="relative w-1/2 max-w-[200px]">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input 
-                    placeholder="Search..." 
+                    placeholder="Search name..." 
                     className="pl-9 h-9 text-xs rounded-lg"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -275,7 +278,7 @@ export default function EventPage() {
                         <TableCell className="font-bold font-body">{entry.guestName}</TableCell>
                         <TableCell className="text-muted-foreground font-body">{entry.location || '-'}</TableCell>
                         <TableCell className="text-right font-headline font-bold text-accent" suppressHydrationWarning>
-                          ₹{entry.amount.toLocaleString()}
+                          ₹{(Number(entry.amount) || 0).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell" suppressHydrationWarning>
                           {entry.contributionDate ? new Date(entry.contributionDate).toLocaleDateString() : '-'}
