@@ -1,19 +1,5 @@
 include ':app'
 
-// Capacitor plugins are normally included via this script
-// We use a safe check to see if it exists
-def capacitorSettings = file('capacitor.settings.gradle')
-if (capacitorSettings.exists()) {
-    apply from: 'capacitor.settings.gradle'
-} else {
-    // Manual fallback for core capacitor project if sync hasn't generated the file yet
-    include ':capacitor-android'
-    project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
-    
-    // Check if Cordova plugins directory exists and include it
-    def cordovaPluginsDir = file('capacitor-cordova-android-plugins')
-    if (cordovaPluginsDir.exists()) {
-        include ':capacitor-cordova-android-plugins'
-        project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
-    }
-}
+// Capacitor dynamically generates this file to include plugin projects.
+// It is expected to be in the same directory as settings.gradle.
+apply from: 'capacitor.settings.gradle'
