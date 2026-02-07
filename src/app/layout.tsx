@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
@@ -6,9 +5,14 @@ import { Toaster } from '@/components/ui/toaster';
 import { LanguageProvider } from '@/components/LanguageContext';
 
 export const metadata: Metadata = {
-  title: 'Nevta Digital - Smart Sagoon Records',
-  description: 'Digital record keeping for social events and occasions.',
+  title: 'Nevta Digital - Smart Sagoon & Social Event Records',
+  description: 'Manage your traditional social event contributions with Nevta Digital. Securely record Sagoon, track guest entries in real-time, and export PDF reports. Start now!',
+  keywords: 'Nevta Digital, Sagoon records, social event management, digital record keeping, guest contributions tracker, wedding registry India',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -38,6 +42,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+        <link rel="icon" href="/icon.png" />
         <link rel="apple-touch-icon" href="/icon.png" />
       </head>
       <body className="font-body antialiased selection:bg-primary/30">
