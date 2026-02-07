@@ -1,0 +1,17 @@
+{
+  "name": "Nevta Digital",
+  "short_name": "Nevta",
+  "description": "Digital Sagoon & Nevta Record Keeper",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#D4AF37",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
