@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "static-build": "next build && npx cap sync android",
     "android:apk": "npx cap sync android && cd android && ./gradlew assembleDebug",
+    "android:rebuild": "npx cap sync android && cd android && ./gradlew clean assembleDebug",
     "android:aab": "npx cap sync android && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
