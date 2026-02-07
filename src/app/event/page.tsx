@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react';
@@ -51,7 +50,7 @@ function EventContent() {
 
   useEffect(() => {
     if (isMounted && !isUserLoading && !user) {
-      router.push('/login');
+      router.push('/login/');
     }
   }, [user, isUserLoading, router, isMounted]);
 
@@ -142,7 +141,7 @@ function EventContent() {
 
   const demoQr = PlaceHolderImages.find(img => img.id === 'demo-qr');
 
-  if (isUserLoading || !user || isOccasionLoading || isEntriesLoading || !isMounted || !id) {
+  if (!isMounted || isUserLoading || !user || isOccasionLoading || isEntriesLoading || !id) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -153,7 +152,7 @@ function EventContent() {
   return (
     <div className="min-h-screen bg-background">
       <header className="px-6 h-16 flex items-center border-b bg-white shadow-sm sticky top-0 z-50 print:hidden">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="mr-4">
+        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/')} className="mr-4">
           <ArrowLeft className="w-5 h-5 mr-2" /> {t('back')}
         </Button>
         <span className="font-headline text-xl font-bold text-accent truncate">{occasion?.name || t('manageRecords')}</span>
