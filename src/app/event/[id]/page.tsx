@@ -169,7 +169,6 @@ export default function EventPage() {
 
   const demoQr = PlaceHolderImages.find(img => img.id === 'demo-qr');
 
-  // SAFETY: Check for !user specifically to avoid reading uid from null during redirects
   if (isUserLoading || !user || isOccasionLoading || isEntriesLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

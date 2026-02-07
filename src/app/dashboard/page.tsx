@@ -149,7 +149,6 @@ export default function Dashboard() {
     }
   };
 
-  // SAFETY: Check for !user specifically to avoid reading uid from null during redirects
   if (isUserLoading || !user || isOccasionsLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
