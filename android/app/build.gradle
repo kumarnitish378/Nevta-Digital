@@ -5,15 +5,15 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId "com.nevtadigital.app"
-        minSdk 23
+        minSdk 22
         targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Strings and resources annotations can be stripped to minimize file size
-             // in some configurations, but we keep them for simplicity here.
-             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+             // Fragments allowed queries exclusions to prevent merge conflicts
+             cruncherEnabled = false
+             useNewCruncher = false
         }
     }
     buildTypes {
@@ -36,14 +36,11 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
-    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.10.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation project(':capacitor-android')
     implementation project(':capacitor-cordova-android-plugins')
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
 
 apply from: 'capacitor.build.gradle'
