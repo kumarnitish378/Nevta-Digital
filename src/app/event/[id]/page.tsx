@@ -1,3 +1,13 @@
-// This file is removed to prevent Internal Server Errors during static export.
-// Navigation has been migrated to /event/?id=...
-export default function Page() { return null; }
+
+/**
+ * This route is disabled in favor of /event?id=... to support static exports.
+ * generateStaticParams is provided as a dummy to satisfy the build process.
+ */
+
+export function generateStaticParams() {
+  return [];
+}
+
+export default function Page() {
+  return null;
+}
