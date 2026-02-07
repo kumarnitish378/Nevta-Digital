@@ -9,6 +9,17 @@ import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight } from 'l
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Mocked Data
 const INITIAL_OCCASIONS = [
@@ -37,6 +48,10 @@ export default function Dashboard() {
     setOccasions([createdOccasion, ...occasions]);
     setIsDialogOpen(false);
     setNewOccasion({ title: "", organizer: "Suresh Kumar", date: new Date().toISOString().split('T')[0] });
+  };
+
+  const handleDeleteOccasion = (id: string) => {
+    setOccasions(occasions.filter(o => o.id !== id));
   };
 
   return (
@@ -144,9 +159,28 @@ export default function Dashboard() {
                     Manage Records <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setOccasions(occasions.filter(o => o.id !== occ.id))}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Occasion?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete "<strong>{occ.title}</strong>" and all its associated Nevta records. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteOccasion(occ.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete Event
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardFooter>
             </Card>
           )) : (

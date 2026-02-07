@@ -39,12 +39,11 @@ export default function EventPage() {
   const [location, setLocation] = useState("");
   const [amount, setAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   const totalAmount = useMemo(() => entries.reduce((acc, curr) => acc + curr.amount, 0), [entries]);
   const guestCount = entries.length;
 
-  // Compute unique locations for suggestions
+  // Compute unique locations for suggestions to speed up entry
   const uniqueLocations = useMemo(() => {
     const locs = entries.map(e => e.location).filter(Boolean);
     return Array.from(new Set(locs)).sort();
@@ -80,7 +79,6 @@ export default function EventPage() {
   const handleDeleteEntry = (entryId: string) => {
     setEntries(entries.filter(e => e.id !== entryId));
     toast({ title: "Entry Deleted", description: "The record has been removed." });
-    setEntryToDelete(null);
   };
 
   const exportCSV = () => {
@@ -241,9 +239,9 @@ export default function EventPage() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogTitle>Delete Record?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This will permanently delete the entry for <b>{entry.guestName}</b> (₹{entry.amount}).
+                                    This will permanently remove the entry for <strong>{entry.guestName}</strong> (₹{entry.amount}).
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
