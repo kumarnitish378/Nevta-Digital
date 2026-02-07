@@ -9,9 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet, Loader2, QrCode, Upload, Sparkles } from 'lucide-react';
+import { ArrowLeft, IndianRupee, Plus, Search, FileText, Trash2, Upload, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,13 +27,12 @@ import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useLanguage } from '@/components/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { getEventInsights, type EventInsightsOutput } from '@/ai/flows/event-insights-flow';
 
 export default function EventPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const db = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -44,8 +42,6 @@ export default function EventPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMounted, setIsMounted] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiInsights, setAiInsights] = useState<EventInsightsOutput | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -122,28 +118,11 @@ export default function EventPage() {
     toast({ title: "Entry Saved", description: `₹${amount} for ${guestName}` });
   }, [db, user?.uid, id, guestName, locationInput, amount]);
 
-  const handleGenerateAiInsights = async () => {
-    if (!entries || entries.length === 0) {
-      toast({ title: "No Data", description: "Add records first to generate insights." });
-      return;
-    }
-    setIsAiLoading(true);
-    try {
-      const result = await getEventInsights({
-        eventName: occasion?.name || 'Event',
-        language: language as 'en' | 'hi',
-        contributions: entries.map(e => ({
-          guestName: e.guestName,
-          location: e.location,
-          amount: Number(e.amount)
-        }))
-      });
-      setAiInsights(result);
-    } catch (err) {
-      toast({ title: "Error", description: "Could not analyze event.", variant: "destructive" });
-    } finally {
-      setIsAiLoading(false);
-    }
+  const handleDeleteEntry = (entryId: string) => {
+    if (!db || !user?.uid || !id) return;
+    const entryRef = doc(db, 'users', user.uid, 'occasions', id as string, 'contributions', entryId);
+    deleteDocumentNonBlocking(entryRef);
+    toast({ title: "Deleted", description: "Entry removed." });
   };
 
   const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,20 +136,6 @@ export default function EventPage() {
       toast({ title: "Updated", description: "UPI QR code saved." });
     };
     reader.readAsDataURL(file);
-  };
-
-  const exportCSV = () => {
-    if (!entries) return;
-    const headers = [t('tableGuest'), t('tableLocation'), t('tableAmount'), t('tableDate')];
-    const rows = entries.map(e => [e.guestName, e.location, e.amount, e.contributionDate]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(r => r.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Report_${occasion?.name}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const demoQr = PlaceHolderImages.find(img => img.id === 'demo-qr');
@@ -212,44 +177,7 @@ export default function EventPage() {
               <h2 className="text-3xl font-headline font-bold text-accent">₹{totalAmount.toLocaleString()}</h2>
             </CardContent>
           </Card>
-          <div className="hidden lg:block col-span-2">
-             <Button 
-                onClick={handleGenerateAiInsights} 
-                disabled={isAiLoading}
-                className="w-full h-full border-2 border-dashed border-primary/30 text-primary hover:bg-primary/5 bg-transparent flex flex-col gap-1 items-center justify-center rounded-xl"
-             >
-                {isAiLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <>
-                    <Sparkles className="w-6 h-6" />
-                    <span className="font-bold">{t('generateSummary')}</span>
-                  </>
-                )}
-             </Button>
-          </div>
         </div>
-
-        {aiInsights && (
-          <Card className="mb-8 border-primary/30 bg-primary/5 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-             <CardHeader className="bg-primary/10 border-b">
-               <CardTitle className="text-lg font-headline flex items-center gap-2">
-                 <Sparkles className="w-5 h-5 text-primary" /> {t('aiInsights')}
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="pt-6">
-                <p className="font-body text-xl italic mb-4 leading-relaxed">{aiInsights.summary}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {aiInsights.funFacts.map((fact, idx) => (
-                    <div key={idx} className="flex gap-2 items-start text-sm font-body">
-                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                      <p>{fact}</p>
-                    </div>
-                  ))}
-                </div>
-             </CardContent>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-4 print:hidden space-y-6">

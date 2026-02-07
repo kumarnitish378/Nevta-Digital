@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Plus, Calendar, User, Search, IndianRupee, Trash2, ArrowRight, Loader2, Users, BarChart3 } from 'lucide-react';
+import { Plus, Calendar, IndianRupee, Trash2, ArrowRight, Loader2, Users, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -20,13 +20,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useAuth } from '@/firebase';
-import { collection, doc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
 import { useLanguage } from '@/components/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 function OccasionStats({ userId, occasionId }: { userId: string; occasionId: string }) {
   const { t } = useLanguage();
@@ -77,7 +75,6 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [occasionsWithTotals, setOccasionsWithTotals] = useState<any[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -96,48 +93,11 @@ export default function Dashboard() {
 
   const { data: occasions, isLoading: isOccasionsLoading } = useCollection(occasionsRef);
 
-  useEffect(() => {
-    if (!db || !user?.uid || !occasions) return;
-
-    const unsubscribers: (() => void)[] = [];
-
-    occasions.forEach(occ => {
-      const q = collection(db, 'users', user.uid, 'occasions', occ.id, 'contributions');
-      const unsub = onSnapshot(q, (snapshot) => {
-        const total = snapshot.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0);
-        setOccasionsWithTotals(prev => {
-          const index = prev.findIndex(p => p.id === occ.id);
-          const newItem = { id: occ.id, name: occ.name, total };
-          if (index >= 0) {
-            const updated = [...prev];
-            updated[index] = newItem;
-            return updated;
-          }
-          return [...prev, newItem];
-        });
-      });
-      unsubscribers.push(unsub);
-    });
-
-    return () => unsubscribers.forEach(u => u());
-  }, [db, user?.uid, occasions]);
-
   const filteredOccasions = useMemo(() => {
     return (occasions || []).filter(occ => 
       occ.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [occasions, searchQuery]);
-
-  const chartData = useMemo(() => {
-    return occasionsWithTotals
-      .filter(o => o.total > 0)
-      .slice(0, 5)
-      .map(o => ({
-        name: o.name.split(' ')[0], // short name
-        fullName: o.name,
-        total: o.total
-      }));
-  }, [occasionsWithTotals]);
 
   const handleCreateOccasion = () => {
     if (!db || !user?.uid) return;
@@ -234,43 +194,6 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
-        {chartData.length > 0 && (
-          <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-headline flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-primary" /> {t('analytics')}
-              </CardTitle>
-              <CardDescription>{t('collectionSummary')}</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[250px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                  <Tooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-3 border rounded-lg shadow-xl">
-                            <p className="font-bold text-accent">{payload[0].payload.fullName}</p>
-                            <p className="text-primary font-bold">₹{payload[0].value?.toLocaleString()}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--accent))'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input 
@@ -301,9 +224,11 @@ export default function Dashboard() {
                 </Button>
                 
                 <AlertDialog>
-                  <Button variant="outline" size="icon" asChild className="h-11 w-11 text-red-500 border-red-100">
-                    <DialogTrigger><Trash2 className="w-5 h-5" /></DialogTrigger>
-                  </Button>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-11 w-11 text-red-500 border-red-100">
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{t('deletingEventTitle')}</AlertDialogTitle>
