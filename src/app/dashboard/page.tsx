@@ -79,7 +79,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!isUserLoading && !user && isMounted) {
+    if (isMounted && !isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router, isMounted]);
@@ -149,7 +149,8 @@ export default function Dashboard() {
     }
   };
 
-  if (isUserLoading || isOccasionsLoading || !isMounted) {
+  // SAFETY: Check for !user specifically to avoid reading uid from null during redirects
+  if (isUserLoading || !user || isOccasionsLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -254,7 +255,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4 flex-1">
-                <OccasionStats userId={user!.uid} occasionId={occ.id} />
+                <OccasionStats userId={user.uid} occasionId={occ.id} />
               </CardContent>
               <CardFooter className="bg-white border-t p-4 flex gap-3">
                 <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11">

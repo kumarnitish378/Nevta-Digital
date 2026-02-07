@@ -48,7 +48,7 @@ export default function EventPage() {
   }, []);
 
   useEffect(() => {
-    if (!isUserLoading && !user && isMounted) {
+    if (isMounted && !isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router, isMounted]);
@@ -169,7 +169,8 @@ export default function EventPage() {
 
   const demoQr = PlaceHolderImages.find(img => img.id === 'demo-qr');
 
-  if (isUserLoading || isOccasionLoading || isEntriesLoading || !isMounted) {
+  // SAFETY: Check for !user specifically to avoid reading uid from null during redirects
+  if (isUserLoading || !user || isOccasionLoading || isEntriesLoading || !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
