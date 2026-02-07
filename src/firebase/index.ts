@@ -9,12 +9,11 @@ import { getFirestore } from 'firebase/firestore'
 /**
  * Initializes Firebase with a focus on robustness for both Web and Capacitor (Mobile).
  * On the client, it intelligently switches between local config and App Hosting auto-config.
- * During build (Node.js), it uses the config object to prevent app/no-options error.
  */
 export function initializeFirebase() {
-  const existingApps = getApps();
-  if (existingApps.length > 0) {
-    return getSdks(existingApps[0]);
+  // Defensive check for existing apps to prevent double-initialization errors
+  if (getApps().length > 0) {
+    return getSdks(getApp());
   }
 
   const isBrowser = typeof window !== 'undefined';
