@@ -21,9 +21,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useAuth } from '@/firebase';
 import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
+import { signOut } from 'firebase/auth';
 
 function OccasionStats({ userId, occasionId }: { userId: string; occasionId: string }) {
   const db = useFirestore();
@@ -64,6 +65,7 @@ function OccasionStats({ userId, occasionId }: { userId: string; occasionId: str
 
 export default function Dashboard() {
   const router = useRouter();
+  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -137,8 +139,14 @@ export default function Dashboard() {
     toast({ title: "Event Deleted", description: "The occasion has been removed." });
   };
 
-  const handleLogout = () => {
-     router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Logged Out", description: "Successfully signed out." });
+      router.push('/login');
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to logout. Please try again.", variant: "destructive" });
+    }
   };
 
   if (isUserLoading || isOccasionsLoading || !isMounted) {

@@ -36,7 +36,7 @@ export default function RegisterPage() {
     }
   }, [user, isUserLoading, router, isMounted]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (mobile.length < 10) {
@@ -50,33 +50,35 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    
     const dummyEmail = `${mobile}@nevta.digital`;
     
-    initiateEmailSignUp(auth, dummyEmail, password)
-      .then(async (credential) => {
-        // Success: Handle profile and data setup
-        await updateProfile(credential.user, { displayName: name });
-        
-        const userDocRef = doc(db, 'users', credential.user.uid);
-        setDocumentNonBlocking(userDocRef, {
-          id: credential.user.uid,
-          name: name,
-          mobileNumber: mobile,
-          createdAt: new Date().toISOString()
-        }, { merge: true });
+    try {
+      const credential = await initiateEmailSignUp(auth, dummyEmail, password);
+      
+      // Update profile display name
+      await updateProfile(credential.user, { displayName: name });
+      
+      // Setup user document
+      const userDocRef = doc(db, 'users', credential.user.uid);
+      setDocumentNonBlocking(userDocRef, {
+        id: credential.user.uid,
+        name: name,
+        mobileNumber: mobile,
+        createdAt: new Date().toISOString()
+      }, { merge: true });
 
-        toast({ title: "Registration Successful", description: "Welcome to Nevta Digital!" });
-        router.push('/dashboard');
-      })
-      .catch((err: any) => {
-        setIsLoading(false);
-        let message = err.message;
-        if (err.code === 'auth/email-already-in-use') {
-          message = "An account with this mobile number already exists.";
-        }
-        toast({ title: "Registration Failed", description: message, variant: "destructive" });
-      });
+      toast({ title: "Registration Successful", description: `Welcome, ${name}! Starting your journey.` });
+      // Redirect is handled by the useEffect
+    } catch (err: any) {
+      setIsLoading(false);
+      let message = err.message;
+      if (err.code === 'auth/email-already-in-use') {
+        message = "An account with this mobile number already exists.";
+      } else if (err.code === 'auth/invalid-email') {
+        message = "Registration failed. Please try a different mobile number.";
+      }
+      toast({ title: "Registration Failed", description: message, variant: "destructive" });
+    }
   };
 
   if (!isMounted) return null;
@@ -139,7 +141,12 @@ export default function RegisterPage() {
               />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Register Now"}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Creating Account...</span>
+                </div>
+              ) : "Register Now"}
             </Button>
           </form>
         </CardContent>

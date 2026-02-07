@@ -32,7 +32,7 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router, isMounted]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (mobile.length < 10) {
@@ -41,24 +41,24 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    
     const dummyEmail = `${mobile}@nevta.digital`;
     
-    initiateEmailSignIn(auth, dummyEmail, password)
-      .then(() => {
-        toast({ title: "Success", description: "Logging you in..." });
-        router.push('/dashboard');
-      })
-      .catch((err: any) => {
-        setIsLoading(false);
-        let message = "Please check your mobile number and password.";
-        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-          message = "Invalid mobile number or password.";
-        } else if (err.code === 'auth/user-not-found') {
-          message = "No account found with this mobile number.";
-        }
-        toast({ title: "Login Failed", description: message, variant: "destructive" });
-      });
+    try {
+      await initiateEmailSignIn(auth, dummyEmail, password);
+      toast({ title: "Success", description: "Welcome back! Accessing your dashboard." });
+      // Redirect is handled by the useEffect
+    } catch (err: any) {
+      setIsLoading(false);
+      let message = "Please check your mobile number and password.";
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        message = "Invalid mobile number or password.";
+      } else if (err.code === 'auth/user-not-found') {
+        message = "No account found with this mobile number.";
+      } else if (err.code === 'auth/invalid-email') {
+        message = "Account lookup failed. Please try again.";
+      }
+      toast({ title: "Login Failed", description: message, variant: "destructive" });
+    }
   };
 
   if (!isMounted) return null;
@@ -109,7 +109,12 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 text-lg rounded-xl shadow-md" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Login Now"}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Authenticating...</span>
+                </div>
+              ) : "Login Now"}
             </Button>
           </form>
         </CardContent>
