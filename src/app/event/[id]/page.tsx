@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, IndianRupee, MapPin, User, Plus, Download, Search, FileText, Trash2, Calendar, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, IndianRupee, MapPin, User, Plus, Search, FileText, Trash2, Calendar, FileSpreadsheet } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { useSidebar } from '@/components/ui/sidebar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Mocked Data
 const INITIAL_ENTRIES = [
@@ -29,9 +39,16 @@ export default function EventPage() {
   const [location, setLocation] = useState("");
   const [amount, setAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   const totalAmount = useMemo(() => entries.reduce((acc, curr) => acc + curr.amount, 0), [entries]);
   const guestCount = entries.length;
+
+  // Compute unique locations for suggestions
+  const uniqueLocations = useMemo(() => {
+    const locs = entries.map(e => e.location).filter(Boolean);
+    return Array.from(new Set(locs)).sort();
+  }, [entries]);
 
   const filteredEntries = entries.filter(e => 
     e.guestName.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -58,6 +75,12 @@ export default function EventPage() {
     setLocation("");
     setAmount("");
     toast({ title: "Entry Saved", description: `Added ₹${amount} for ${guestName}` });
+  };
+
+  const handleDeleteEntry = (entryId: string) => {
+    setEntries(entries.filter(e => e.id !== entryId));
+    toast({ title: "Entry Deleted", description: "The record has been removed." });
+    setEntryToDelete(null);
   };
 
   const exportCSV = () => {
@@ -146,7 +169,19 @@ export default function EventPage() {
                     <Label htmlFor="location" className="font-body font-bold flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-primary" /> Location / Place
                     </Label>
-                    <Input id="location" placeholder="e.g. Jodhpur" value={location} onChange={e => setLocation(e.target.value)} className="rounded-lg h-11" />
+                    <Input 
+                      id="location" 
+                      list="location-suggestions"
+                      placeholder="e.g. Jodhpur" 
+                      value={location} 
+                      onChange={e => setLocation(e.target.value)} 
+                      className="rounded-lg h-11" 
+                    />
+                    <datalist id="location-suggestions">
+                      {uniqueLocations.map((loc) => (
+                        <option key={loc} value={loc} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="font-body font-bold flex items-center gap-2">
@@ -198,9 +233,27 @@ export default function EventPage() {
                         <TableCell className="text-right font-headline font-bold text-accent text-lg">₹{entry.amount.toLocaleString()}</TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground font-body print:table-cell hidden sm:table-cell">{entry.timestamp}</TableCell>
                         <TableCell className="print:hidden">
-                           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500" onClick={() => setEntries(entries.filter(e => e.id !== entry.id))}>
-                             <Trash2 className="w-4 h-4" />
-                           </Button>
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently delete the entry for <b>{entry.guestName}</b> (₹{entry.amount}).
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteEntry(entry.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    Delete Record
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                           </AlertDialog>
                         </TableCell>
                       </TableRow>
                     )) : (
