@@ -132,7 +132,7 @@ export default function Dashboard() {
     router.push('/login');
   };
 
-  // Capture user at this point to avoid null access in child components if auth state flickers
+  // Safe reference for the current user
   const currentUser = user;
 
   if (isUserLoading || !currentUser || isOccasionsLoading || !isMounted) {

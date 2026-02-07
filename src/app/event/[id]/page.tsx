@@ -1,35 +1,17 @@
-"use client";
-
-import { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-
 /**
- * This page acts as a redirector to the static /event?id=... route.
- * It also provides generateStaticParams to satisfy the 'output: export' requirement.
+ * This route is maintained only to satisfy the file structure during static export.
+ * Navigation is handled via /event?id=...
  */
 
 export function generateStaticParams() {
-  // Return an empty array to allow the build to pass. 
-  // Actual navigation is handled by /event?id=...
-  return [];
+  // Provide a dummy param to satisfy the 'output: export' build requirement
+  return [{ id: 'placeholder' }];
 }
 
-export default function EventIdRedirect() {
-  const router = useRouter();
-  const params = useParams();
-
-  useEffect(() => {
-    if (params?.id) {
-      router.replace(`/event?id=${params.id}`);
-    } else {
-      router.replace('/dashboard');
-    }
-  }, [params, router]);
-
+export default function EventIdPlaceholder() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-muted-foreground">Redirecting to event details...</p>
     </div>
   );
 }
