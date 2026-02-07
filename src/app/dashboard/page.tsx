@@ -30,8 +30,16 @@ const INITIAL_OCCASIONS = [
 export default function Dashboard() {
   const [occasions, setOccasions] = useState(INITIAL_OCCASIONS);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newOccasion, setNewOccasion] = useState({ title: "", organizer: "Suresh Kumar", date: new Date().toISOString().split('T')[0] });
+  const [newOccasion, setNewOccasion] = useState({ title: "", organizer: "Suresh Kumar", date: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Defer date initialization to prevent hydration mismatch
+  useEffect(() => {
+    setNewOccasion(prev => ({
+      ...prev,
+      date: new Date().toISOString().split('T')[0]
+    }));
+  }, []);
 
   const filteredOccasions = occasions.filter(occ => 
     occ.title.toLowerCase().includes(searchQuery.toLowerCase())
