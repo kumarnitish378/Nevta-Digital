@@ -1,10 +1,4 @@
 
 {
-  "appId": "com.nevtadigital.app",
-  "appName": "Nevta Digital",
-  "webDir": "out",
-  "server": {
-    "androidScheme": "https",
-    "cleartext": true
-  }
+  "remark": "Android/Capacitor support has been removed in favor of a pure web-app build."
 }
