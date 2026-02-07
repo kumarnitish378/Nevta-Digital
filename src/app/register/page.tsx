@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -28,7 +27,7 @@ export default function RegisterPage() {
     setIsMounted(true);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (mobile.length < 10) {
@@ -36,40 +35,38 @@ export default function RegisterPage() {
       return;
     }
 
+    if (password.length < 6) {
+      toast({ title: "Weak Password", description: "Password should be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true);
     
     const dummyEmail = `${mobile}@nevta.digital`;
     
-    try {
-      initiateEmailSignUp(auth, dummyEmail, password);
-      
-      const checkAuthInterval = setInterval(async () => {
-        if (auth.currentUser) {
-          clearInterval(checkAuthInterval);
-          
-          await updateProfile(auth.currentUser, { displayName: name });
-          
-          const userDocRef = doc(db, 'users', auth.currentUser.uid);
-          setDocumentNonBlocking(userDocRef, {
-            id: auth.currentUser.uid,
-            name: name,
-            mobileNumber: mobile,
-            createdAt: new Date().toISOString()
-          }, { merge: true });
+    initiateEmailSignUp(auth, dummyEmail, password)
+      .then(async (credential) => {
+        // Success: Handle profile and data setup
+        await updateProfile(credential.user, { displayName: name });
+        
+        const userDocRef = doc(db, 'users', credential.user.uid);
+        setDocumentNonBlocking(userDocRef, {
+          id: credential.user.uid,
+          name: name,
+          mobileNumber: mobile,
+          createdAt: new Date().toISOString()
+        }, { merge: true });
 
-          router.push('/dashboard');
-        }
-      }, 500);
-
-      setTimeout(() => {
-        clearInterval(checkAuthInterval);
+        router.push('/dashboard');
+      })
+      .catch((err: any) => {
         setIsLoading(false);
-      }, 10000);
-
-    } catch (err: any) {
-      setIsLoading(false);
-      toast({ title: "Registration Failed", description: err.message, variant: "destructive" });
-    }
+        let message = err.message;
+        if (err.code === 'auth/email-already-in-use') {
+          message = "An account with this mobile number already exists.";
+        }
+        toast({ title: "Registration Failed", description: message, variant: "destructive" });
+      });
   };
 
   if (!isMounted) return null;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -24,7 +23,7 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (mobile.length < 10) {
@@ -36,25 +35,22 @@ export default function LoginPage() {
     
     const dummyEmail = `${mobile}@nevta.digital`;
     
-    try {
-      initiateEmailSignIn(auth, dummyEmail, password);
-      
-      const checkAuthInterval = setInterval(() => {
-        if (auth.currentUser) {
-          clearInterval(checkAuthInterval);
-          router.push('/dashboard');
-        }
-      }, 500);
-
-      setTimeout(() => {
-        clearInterval(checkAuthInterval);
+    // We don't 'await' here to maintain the non-blocking pattern, but we MUST catch the error.
+    initiateEmailSignIn(auth, dummyEmail, password)
+      .then(() => {
+        // Success handled by Auth state listener in Provider
+        router.push('/dashboard');
+      })
+      .catch((err: any) => {
         setIsLoading(false);
-      }, 5000);
-
-    } catch (err: any) {
-      setIsLoading(false);
-      toast({ title: "Login Failed", description: "Please check your mobile number and password.", variant: "destructive" });
-    }
+        let message = "Please check your mobile number and password.";
+        if (err.code === 'auth/invalid-credential') {
+          message = "Invalid mobile number or password.";
+        } else if (err.code === 'auth/user-not-found') {
+          message = "No account found with this mobile number.";
+        }
+        toast({ title: "Login Failed", description: message, variant: "destructive" });
+      });
   };
 
   if (!isMounted) return null;
