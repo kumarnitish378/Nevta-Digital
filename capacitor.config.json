@@ -4,6 +4,7 @@
   "appName": "Nevta Digital",
   "webDir": "out",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "cleartext": true
   }
 }
