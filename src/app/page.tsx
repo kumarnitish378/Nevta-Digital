@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,11 +11,28 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 export default function Home() {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
+  const [showAltTitle, setShowAltTitle] = useState(false);
   const DOWNLOAD_URL = "https://drive.google.com/file/d/1LaJ8y0Q5dwN7uKBd2FXdt4htmiVUQ-L0/view?usp=sharing";
 
   useEffect(() => {
     setIsMounted(true);
+    const interval = setInterval(() => {
+      setShowAltTitle((prev) => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
+
+  const landingTitleParts = useMemo(() => {
+    const fullTitle = t('landingTitle');
+    const appName = t('appName');
+    if (fullTitle.startsWith(appName)) {
+      return {
+        prefix: "",
+        suffix: fullTitle.replace(appName, "")
+      };
+    }
+    return { prefix: fullTitle, suffix: "" };
+  }, [t]);
 
   if (!isMounted) {
     return (
@@ -56,8 +73,14 @@ export default function Home() {
           <div className="container px-4 md:px-6 relative z-10 mx-auto text-center">
             <div className="flex flex-col items-center space-y-6">
               <div className="space-y-4">
-                <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl text-accent max-w-4xl mx-auto">
-                  {t('landingTitle')}
+                <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl text-accent max-w-4xl mx-auto min-h-[1.2em]">
+                  <span className={`inline-block transition-all duration-700 ease-in-out transform ${showAltTitle ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                    {!showAltTitle && t('appName')}
+                  </span>
+                  <span className={`absolute left-0 right-0 mx-auto transition-all duration-700 ease-in-out transform text-primary ${showAltTitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                    {showAltTitle && t('appNameAlt')}
+                  </span>
+                  <span className="opacity-100">{landingTitleParts.suffix}</span>
                 </h1>
                 <p className="mx-auto max-w-[800px] text-muted-foreground md:text-2xl font-body">
                   {t('landingSubtitle')}

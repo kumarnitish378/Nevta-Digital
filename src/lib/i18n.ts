@@ -3,6 +3,7 @@ export type Language = 'en' | 'hi';
 export const translations: Record<Language, Record<string, string>> = {
   en: {
     appName: "Nevta Digital",
+    appNameAlt: "Shagun Digital",
     login: "Login",
     register: "Register",
     dashboard: "Dashboard",
@@ -101,6 +102,7 @@ export const translations: Record<Language, Record<string, string>> = {
   },
   hi: {
     appName: "नेवता डिजिटल",
+    appNameAlt: "शगुन डिजिटल",
     login: "लॉगिन",
     register: "रजिस्टर",
     dashboard: "डैशबोर्ड",
