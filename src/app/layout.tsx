@@ -5,9 +5,9 @@ import { Toaster } from '@/components/ui/toaster';
 import { LanguageProvider } from '@/components/LanguageContext';
 
 export const metadata: Metadata = {
-  title: 'Nevta Digital - Smart Sagoon & Social Event Records',
-  description: 'Manage your traditional social event contributions with Nevta Digital. Securely record Sagoon, track guest entries in real-time, and export PDF reports. Start now!',
-  keywords: 'Nevta Digital, Sagoon records, social event management, digital record keeping, guest contributions tracker, wedding registry India',
+  title: 'Nevta Digital - Smart Digital Shagun & Social Event Records',
+  description: 'Nevta Digital: The premier app for managing traditional Digital Shagun and social event contributions securely. Record guest entries, track payments, and export PDF reports effortlessly.',
+  keywords: 'Nevta Digital, Digital Shagun, Sagoon records, social event management, digital record keeping, wedding registry India',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.png',

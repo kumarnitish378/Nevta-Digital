@@ -1,15 +1,14 @@
 import { redirect } from 'next/navigation';
 
 /**
- * This page handles dynamic [id] paths by redirecting to the query-param based /event page.
- * We include generateStaticParams and force-dynamic to satisfy all possible build environments (Static vs App Hosting).
+ * Satisfies Next.js build requirements for static routes.
+ * This route is handled via query params in the main app logic.
  */
-export const dynamic = 'force-dynamic';
-
 export function generateStaticParams() {
-  // Return a dummy entry to satisfy the build process for static routes
   return [{ id: 'view' }];
 }
+
+export const dynamic = 'force-dynamic';
 
 export default function EventIdPage() {
   redirect('/event');

@@ -85,7 +85,19 @@ export const translations: Record<Language, Record<string, string>> = {
     total: "Total",
     downloadApp: "Download App",
     privacyPolicy: "Privacy Policy",
-    termsOfService: "Terms of Service"
+    termsOfService: "Terms of Service",
+    about: "About Us",
+    aboutTitle: "About Nevta Digital: Revolutionizing Digital Shagun",
+    aboutSubtitle: "Discover how Nevta Digital is transforming traditional record-keeping into a seamless Digital Shagun experience.",
+    aboutH2_1: "What is Nevta Digital?",
+    aboutP1: "Nevta Digital is a modern solution designed for Indian traditions. For generations, families have used paper notebooks to record Shagun. Nevta Digital brings this tradition into the 21st century by providing a secure, digital platform for recording 'Digital Shagun' and event contributions.",
+    aboutH2_2: "Why Choose Digital Shagun Tracking?",
+    aboutP2: "Managing large social events is stressful. Tracking guest names, locations, and amounts manually leads to errors and lost data. With Nevta Digital, your Digital Shagun records are:",
+    aboutBullet1: "Instantly accessible from any device.",
+    aboutBullet2: "Protected by high-level cloud security.",
+    aboutBullet3: "Easily exportable for family review.",
+    aboutH3_1: "Our Vision for the Future",
+    aboutP3: "We believe that technology should honor tradition. Nevta Digital aims to be the standard for every wedding, anniversary, and social celebration in India, making the management of Digital Shagun effortless for everyone."
   },
   hi: {
     appName: "नेवता डिजिटल",
@@ -171,6 +183,18 @@ export const translations: Record<Language, Record<string, string>> = {
     total: "कुल",
     downloadApp: "ऐप डाउनलोड करें",
     privacyPolicy: "गोपनीयता नीति",
-    termsOfService: "सेवा की शर्तें"
+    termsOfService: "सेवा की शर्तें",
+    about: "हमारे बारे में",
+    aboutTitle: "नेवता डिजिटल के बारे में: डिजिटल शगुन का क्रांतिकारी बदलाव",
+    aboutSubtitle: "जानें कि कैसे नेवता डिजिटल पारंपरिक रिकॉर्ड-कीपिंग को एक सहज डिजिटल शगुन अनुभव में बदल रहा है।",
+    aboutH2_1: "नेवता डिजिटल क्या है?",
+    aboutP1: "नेवता डिजिटल भारतीय परंपराओं के लिए बनाया गया एक आधुनिक समाधान है। पीढ़ियों से, परिवारों ने शगुन रिकॉर्ड करने के लिए कागज की कॉपियों का उपयोग किया है। नेवता डिजिटल डिजिटल शगुन और इवेंट योगदान को रिकॉर्ड करने के लिए एक सुरक्षित, डिजिटल प्लेटफॉर्म प्रदान करके इस परंपरा को 21वीं सदी में लाता है।",
+    aboutH2_2: "डिजिटल शगुन ट्रैकिंग क्यों चुनें?",
+    aboutP2: "बड़े सामाजिक कार्यक्रमों को संभालना तनावपूर्ण होता है। मेहमानों के नाम, स्थान और राशि को मैन्युअल रूप से ट्रैक करने से गलतियां और डेटा खोने का डर रहता है। नेवता डिजिटल के साथ, आपके डिजिटल शगुन रिकॉर्ड हैं:",
+    aboutBullet1: "किसी भी डिवाइस से तुरंत सुलभ।",
+    aboutBullet2: "उच्च स्तरीय क्लाउड सुरक्षा द्वारा सुरक्षित।",
+    aboutBullet3: "पारिवारिक समीक्षा के लिए आसानी से एक्सपोर्ट करने योग्य।",
+    aboutH3_1: "भविष्य के लिए हमारा दृष्टिकोण",
+    aboutP3: "हमारा मानना है कि तकनीक को परंपरा का सम्मान करना चाहिए। नेवता डिजिटल का लक्ष्य भारत में हर शादी, वर्षगांठ और सामाजिक उत्सव के लिए मानक बनना है, जिससे डिजिटल शगुन का प्रबंधन सभी के लिए आसान हो सके।"
   }
 };

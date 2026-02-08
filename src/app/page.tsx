@@ -162,6 +162,7 @@ export default function Home() {
             </p>
           </div>
           <div className="flex gap-8">
+            <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline">{t('about')}</Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline">{t('privacyPolicy')}</Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline">{t('termsOfService')}</Link>
           </div>

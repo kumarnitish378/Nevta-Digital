@@ -19,6 +19,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const savedLanguage = localStorage.getItem('app-language') as Language;
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'hi')) {
       setLanguage(savedLanguage);
+    } else {
+      // Set Hindi as default in localStorage if not present
+      localStorage.setItem('app-language', 'hi');
     }
   }, []);
 
