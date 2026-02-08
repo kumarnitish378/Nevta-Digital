@@ -23,6 +23,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       // Set Hindi as default in localStorage if not present
       localStorage.setItem('app-language', 'hi');
     }
+    // Set HTML lang attribute on load
+    document.documentElement.lang = savedLanguage || 'hi';
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
