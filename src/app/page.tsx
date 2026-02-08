@@ -11,27 +11,50 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 export default function Home() {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
-  const [showAltTitle, setShowAltTitle] = useState(false);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
   const DOWNLOAD_URL = "https://drive.google.com/file/d/1LaJ8y0Q5dwN7uKBd2FXdt4htmiVUQ-L0/view?usp=sharing";
+
+  const words = useMemo(() => [t('appName'), t('appNameAlt')], [t]);
 
   useEffect(() => {
     setIsMounted(true);
-    const interval = setInterval(() => {
-      setShowAltTitle((prev) => !prev);
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
-  const landingTitleParts = useMemo(() => {
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const handleType = () => {
+      const i = loopNum % words.length;
+      const fullWord = words[i];
+
+      setDisplayText(
+        isDeleting
+          ? fullWord.substring(0, displayText.length - 1)
+          : fullWord.substring(0, displayText.length + 1)
+      );
+
+      setTypingSpeed(isDeleting ? 100 : 150);
+
+      if (!isDeleting && displayText === fullWord) {
+        setTimeout(() => setIsDeleting(true), 2000);
+      } else if (isDeleting && displayText === '') {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+      }
+    };
+
+    const timer = setTimeout(handleType, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, loopNum, words, typingSpeed, isMounted]);
+
+  const landingTitleSuffix = useMemo(() => {
     const fullTitle = t('landingTitle');
     const appName = t('appName');
-    if (fullTitle.startsWith(appName)) {
-      return {
-        prefix: "",
-        suffix: fullTitle.replace(appName, "")
-      };
-    }
-    return { prefix: fullTitle, suffix: "" };
+    return fullTitle.replace(appName, "").trim();
   }, [t]);
 
   if (!isMounted) {
@@ -73,14 +96,13 @@ export default function Home() {
           <div className="container px-4 md:px-6 relative z-10 mx-auto text-center">
             <div className="flex flex-col items-center space-y-6">
               <div className="space-y-4">
-                <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl text-accent max-w-4xl mx-auto min-h-[1.2em]">
-                  <span className={`inline-block transition-all duration-700 ease-in-out transform ${showAltTitle ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
-                    {!showAltTitle && t('appName')}
+                <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl text-accent max-w-4xl mx-auto leading-tight">
+                  <span className="text-primary min-h-[1.2em] inline-block">
+                    {displayText}
+                    <span className="animate-pulse ml-1 border-r-4 border-primary"></span>
                   </span>
-                  <span className={`absolute left-0 right-0 mx-auto transition-all duration-700 ease-in-out transform text-primary ${showAltTitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                    {showAltTitle && t('appNameAlt')}
-                  </span>
-                  <span className="opacity-100">{landingTitleParts.suffix}</span>
+                  <br className="md:hidden" />
+                  <span className="block mt-2">{landingTitleSuffix}</span>
                 </h1>
                 <p className="mx-auto max-w-[800px] text-muted-foreground md:text-2xl font-body">
                   {t('landingSubtitle')}
